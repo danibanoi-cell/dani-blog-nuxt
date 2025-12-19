@@ -23,4 +23,5 @@ logs
 .env.*
 !.env.example
 
-/public/foto-sito/* 
+.public/foto-sito/*
+# keep album files tracked; remove the leading slash if present
