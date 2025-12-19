@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "portfolio": "Portfolio",
+    "sessions": "Sessions",
+    "info": "Info",
+    "logout": "Logout"
+  },
+  "index": {
+    "title": "Professional Photography",
+    "description": "Discover professional photography albums"
+  },
+  "session": {
+    "loading": "Loading...",
+    "photoCount": "photos"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "login": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "uploadPhoto": "Upload Photo",
+    "title": "Title",
+    "location": "Location",
+    "category": "Category",
+    "session": "Session",
+    "tags": "Tags (comma separated)",
+    "published": "Published",
+    "upload": "Upload",
+    "uploadSuccess": "Photo uploaded successfully!",
+    "uploadError": "Upload failed",
+    "existingPhotos": "Existing Photos",
+    "stats": "Statistics",
+    "signOut": "Sign Out"
+  },
+  "errors": {
+    "invalidCredentials": "Invalid credentials",
+    "uploadFailed": "Upload failed",
+    "loadingFailed": "Failed to load data"
+  }
+}

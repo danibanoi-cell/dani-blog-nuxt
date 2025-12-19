@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "portfolio": "Portfolio",
+    "sessions": "Sessioni",
+    "about": "Chi Sono",
+    "contact": "Contatti",
+    "info": "Info",
+    "logout": "Esci"
+  },
+  "index": {
+    "title": "Fotografia Professionale",
+    "description": "Scopri gli album di fotografia professionali",
+    "eyebrow": "Fotografia di ritratto & editoriale",
+    "headline": "Momenti autentici, raccontati con eleganza",
+    "payoff": "Fotografo con base a Verona, cattugo storie attraverso ritratti raffinati e immagini editoriali. Ogni fotografia è un'opera originale che celebra l'autenticità e l'emozione del momento.",
+    "loadingAlbums": "Caricamento album...",
+    "loadMoreAlbums": "Carica altri album",
+    "showingAlbums": "Mostrando {current} di {total} album"
+  },
+  "session": {
+    "loading": "Caricamento...",
+    "photoCount": "foto"
+  },
+  "admin": {
+    "dashboard": "Pannello di Controllo",
+    "login": "Accedi",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Accedi",
+    "uploadPhoto": "Carica Foto",
+    "title": "Titolo",
+    "location": "Luogo",
+    "category": "Categoria",
+    "session": "Sessione",
+    "tags": "Tag (separati da virgola)",
+    "published": "Pubblicato",
+    "upload": "Carica",
+    "uploadSuccess": "Foto caricata con successo!",
+    "uploadError": "Errore durante il caricamento",
+    "existingPhotos": "Foto Esistenti",
+    "stats": "Statistiche",
+    "signOut": "Esci"
+  },
+  "errors": {
+    "invalidCredentials": "Credenziali non valide",
+    "uploadFailed": "Caricamento fallito",
+    "loadingFailed": "Errore nel caricamento dei dati"
+  }
+}

@@ -1,0 +1,53 @@
+/* ============================================
+   GLOBAL TYPOGRAPHY - FONT IMPORTS
+   ============================================
+   
+   Project Fonts:
+   - Oswald: Condensed sans-serif for headings (400, 500, 600, 700)
+   - Roboto: Clean sans-serif for body text (300, 400, 500, 700)
+   
+   Both fonts loaded from Google Fonts with display=swap
+   for optimal performance and fallback handling
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+
+/* ============================================
+   CSS CUSTOM PROPERTIES - FONT FAMILIES
+   ============================================ */
+
+:root {
+  /* Heading font stack - Oswald with system fallbacks */
+  --font-heading: 'Oswald', 'Roboto Condensed', 'Arial Narrow', sans-serif;
+  
+  /* Body font stack - Roboto with native system fallbacks */
+  --font-body: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ============================================
+   GLOBAL BASE STYLES
+   ============================================ */
+
+/* Apply body font globally with optimized rendering */
+html,
+body {
+  font-family: var(--font-body); /* Roboto for all body text */
+  text-rendering: optimizeLegibility; /* Enhanced text rendering for better legibility */
+  -webkit-font-smoothing: antialiased; /* Smooth font rendering on WebKit browsers */
+}
+
+/* ============================================
+   HEADING STYLES - ALL LEVELS
+   ============================================ */
+
+/* Apply heading font to all semantic headings and display class */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display {
+  font-family: var(--font-heading); /* Oswald for strong editorial impact */
+  letter-spacing: 0.01em; /* Subtle tracking for elegance */
+}

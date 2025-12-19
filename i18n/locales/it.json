@@ -1,0 +1,41 @@
+{
+  "nav": {
+    "portfolio": "Portafoglio",
+    "sessions": "Sessioni",
+    "info": "Info",
+    "logout": "Logout"
+  },
+  "index": {
+    "title": "Fotografia Professionale",
+    "description": "Scopri gli album di fotografia professionali"
+  },
+  "session": {
+    "loading": "Caricamento...",
+    "photoCount": "foto"
+  },
+  "admin": {
+    "dashboard": "Pannello di Controllo",
+    "login": "Accedi",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Accedi",
+    "uploadPhoto": "Carica Foto",
+    "title": "Titolo",
+    "location": "Luogo",
+    "category": "Categoria",
+    "session": "Sessione",
+    "tags": "Tag (separati da virgola)",
+    "published": "Pubblicato",
+    "upload": "Carica",
+    "uploadSuccess": "Foto caricata con successo!",
+    "uploadError": "Errore durante il caricamento",
+    "existingPhotos": "Foto Esistenti",
+    "stats": "Statistiche",
+    "signOut": "Esci"
+  },
+  "errors": {
+    "invalidCredentials": "Credenziali non valide",
+    "uploadFailed": "Caricamento fallito",
+    "loadingFailed": "Errore nel caricamento dei dati"
+  }
+}
