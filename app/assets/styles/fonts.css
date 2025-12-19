@@ -19,7 +19,7 @@
 :root {
   /* Heading font stack - Oswald with system fallbacks */
   --font-heading: 'Oswald', 'Roboto Condensed', 'Arial Narrow', sans-serif;
-  
+
   /* Body font stack - Roboto with native system fallbacks */
   --font-body: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }

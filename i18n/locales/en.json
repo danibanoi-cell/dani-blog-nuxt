@@ -6,8 +6,12 @@
     "logout": "Logout"
   },
   "index": {
-    "title": "Professional Photography",
-    "description": "Discover professional photography albums"
+    "title": "danibanoiPH ",
+    "description": "discover my photography",
+    "eyebrow": "grab a coffee & stay .",
+    "headline": "Espresso. Chaos. Life.",
+    "payoff": "capturing the world exactly as I see it—messy, beautiful, and authentic. I don't do poses and I don't do perfect. I just love capturing genuine life while having a laugh. If that sounds like your vibe, welcome to my world."
+   
   },
   "session": {
     "loading": "Loading...",

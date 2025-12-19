@@ -7,7 +7,13 @@
   },
   "index": {
     "title": "Fotografia Professionale",
-    "description": "Scopri gli album di fotografia professionali"
+    "description": "Scopri gli album di fotografia professionali",
+    "eyebrow": "Fotografia di ritratto & editoriale",
+    "headline": "Momenti autentici, raccontati con eleganza",
+    "payoff": "Fotografa con base a Verona, cattura storie attraverso ritratti raffinati e immagini editoriali. Ogni fotografia è un'opera originale che celebra l'autenticità e l'emozione del momento.",
+    "loadingAlbums": "Caricamento album...",
+    "loadMoreAlbums": "Carica altri album",
+    "showingAlbums": "Mostrando {current} di {total} album"
   },
   "session": {
     "loading": "Caricamento...",
