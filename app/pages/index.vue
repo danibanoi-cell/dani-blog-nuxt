@@ -1,6 +1,7 @@
 <template>
   <!-- SEO: Main page container with semantic HTML structure -->
   <div class="page-container" itemscope itemtype="https://schema.org/CollectionPage">
+    <div class="animated-background"></div>
     <!-- SEO: Main content area for better accessibility and crawling -->
     <main class="main-content" role="main">
       <!-- SEO: Introduction section with primary keywords and page context -->
@@ -100,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue';
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
 
   // SEO: Page-specific meta tags for photography portfolio (localized)
   const { t } = useI18n();
@@ -123,7 +124,7 @@
   });
 
   // Normalize filepaths returned from the API to web-accessible paths
-  const normalizeFilepath = (fp?: string) => {
+  const normalizeFilepath = (fp?: string): string => {
     if (!fp) return ''
     const s = String(fp)
     if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/')) return s
@@ -134,109 +135,119 @@
     if (cleaned.includes('public/foto-sito/')) {
       return '/foto-sito/' + cleaned.split('public/foto-sito/').pop()
     }
+    if (cleaned.includes('uploads/')) {
+      return '/uploads/' + cleaned.split('uploads/').pop()
+    }
+    if (cleaned.includes('foto-sito/')) {
+      return '/foto-sito/' + cleaned.split('foto-sito/').pop()
+    }
     // Fallback to basename
     const parts = cleaned.split('/').filter(Boolean)
     return parts.length ? `/${parts[parts.length - 1]}` : cleaned
   }
 
   // Posts feed loaded from API
-  const posts = ref<any[]>([]);
-  const loading = ref(true);
-  const visibleAlbumsCount = ref(5);
-  const currentYear = new Date().getFullYear();
+  const posts = ref<ProcessedPhoto[]>([])
+  const loading = ref(true)
+  const visibleAlbumsCount = ref(5)
 
   // Group photos by album (session_slug)
-  const allAlbums = computed(() => {
-    const albumsMap = new Map();
+  const allAlbums = computed((): Album[] => {
+    const albumsMap = new Map<string, Album>()
 
     // Group all photos by session_slug
-    posts.value.forEach((post) => {
-      const slug = post.session_slug;
+    posts.value.forEach((post: ProcessedPhoto) => {
+      const slug = post.session_slug || 'uncategorized'
       if (!albumsMap.has(slug)) {
         albumsMap.set(slug, {
           slug: slug,
           title: post.title,
-          location: post.location,
-          date: post.date,
+          location: post.location || 'Studio',
+          date: post.date_taken || '2025',
           photos: [],
-        });
+          allPhotos: [],
+          totalPhotos: 0
+        })
       }
-      albumsMap.get(slug).photos.push({
-        id: post.id, // Store the actual database ID
+      const album = albumsMap.get(slug)!
+      album.allPhotos.push({
+        id: post.id,
         image: post.src,
         title: post.title,
         description: post.excerpt,
-      });
-    });
+      })
+    })
 
     // Convert to array with all photos sorted by ID ascending within each album
-    return Array.from(albumsMap.values()).map((album) => ({
-      ...album,
-      allPhotos: album.photos.sort((a, b) => a.id - b.id), // Sort by ID ascending
-      totalPhotos: album.photos.length,
-    }));
-  });
+    return Array.from(albumsMap.values())
+      .map((album) => ({
+        ...album,
+        allPhotos: (album.allPhotos as AlbumPhoto[]).sort((a, b) => a.id - b.id),
+        totalPhotos: album.allPhotos.length,
+      }))
+      .filter(album => album.slug !== 'uncategorized')
+  })
 
   // Visible albums (limited to visibleAlbumsCount)
-  const albums = computed(() => {
-    return allAlbums.value.slice(0, visibleAlbumsCount.value);
-  });
+  const albums = computed((): Album[] => {
+    return allAlbums.value.slice(0, visibleAlbumsCount.value)
+  })
 
   // Check if there are more albums to load
-  const hasMoreAlbums = computed(() => {
-    return allAlbums.value.length > visibleAlbumsCount.value;
-  });
+  const hasMoreAlbums = computed((): boolean => {
+    return allAlbums.value.length > visibleAlbumsCount.value
+  })
 
   // Load more albums
-  const loadMoreAlbums = () => {
-    visibleAlbumsCount.value += 5;
-  };
+  const loadMoreAlbums = (): void => {
+    visibleAlbumsCount.value += 5
+  }
 
   // Lightbox state
-  const lightboxOpen = ref(false);
-  const lightboxImages = ref<any[]>([]);
-  const currentImageIndex = ref(0);
+  const lightboxOpen = ref(false)
+  const lightboxImages = ref<AlbumPhoto[]>([])
+  const currentImageIndex = ref(0)
 
   // Open lightbox with album photos
-  const openLightbox = (photos: any[], index: number) => {
-    lightboxImages.value = photos;
-    currentImageIndex.value = index;
-    lightboxOpen.value = true;
-    document.body.style.overflow = 'hidden';
-  };
+  const openLightbox = (photos: AlbumPhoto[], index: number): void => {
+    lightboxImages.value = photos
+    currentImageIndex.value = index
+    lightboxOpen.value = true
+    document.body.style.overflow = 'hidden'
+  }
 
   // Close lightbox
-  const closeLightbox = () => {
-    lightboxOpen.value = false;
-    document.body.style.overflow = '';
-  };
+  const closeLightbox = (): void => {
+    lightboxOpen.value = false
+    document.body.style.overflow = ''
+  }
 
   // Navigate lightbox
-  const nextImage = () => {
+  const nextImage = (): void => {
     if (currentImageIndex.value < lightboxImages.value.length - 1) {
-      currentImageIndex.value++;
+      currentImageIndex.value++
     }
-  };
+  }
 
-  const prevImage = () => {
+  const prevImage = (): void => {
     if (currentImageIndex.value > 0) {
-      currentImageIndex.value--;
+      currentImageIndex.value--
     }
-  };
+  }
 
   // Keyboard navigation
-  const handleKeydown = (e: KeyboardEvent) => {
-    if (!lightboxOpen.value) return;
+  const handleKeydown = (e: KeyboardEvent): void => {
+    if (!lightboxOpen.value) return
 
-    if (e.key === 'Escape') closeLightbox();
-    else if (e.key === 'ArrowRight') nextImage();
-    else if (e.key === 'ArrowLeft') prevImage();
-  };
+    if (e.key === 'Escape') closeLightbox()
+    else if (e.key === 'ArrowRight') nextImage()
+    else if (e.key === 'ArrowLeft') prevImage()
+  }
 
   // SEO: Fetch and display published photos on mount
   onMounted(async () => {
     // Add keyboard event listener
-    window.addEventListener('keydown', handleKeydown);
+    window.addEventListener('keydown', handleKeydown)
 
     // Track page visit for analytics
     try {
@@ -245,31 +256,40 @@
         body: {
           page: window.location.pathname,
         },
-      });
+      })
     } catch (error) {
       // Silent fail - analytics tracking shouldn't block page load
     }
 
     try {
-      const response = await $fetch('/api/photos?published=true');
-      if (response.success && Array.isArray(response.photos)) {
-        // Map API response to post format with SEO-friendly data structure
-        posts.value = response.photos.map((photo: any) => ({
-          src: normalizeFilepath(photo.filepath),
-          title: photo.title,
-          session_slug: photo.session_slug,
-          location: photo.location || 'Studio',
-          date: photo.date_taken || '2025 · Personal',
-          excerpt: photo.excerpt || 'Photography from the collection',
-          tags: photo.tags && Array.isArray(photo.tags) ? photo.tags : ['Photography'],
-        }));
+      console.log('[Index] Fetching photos...')
+      const response = await $fetch<{ success: boolean; data?: Photo[]; photos?: Photo[] }>('/api/photos?published=true')
+      console.log('[Index] API Response:', response)
+      
+      if (response.success && (Array.isArray(response.data) || Array.isArray(response.photos))) {
+        const photoArray = Array.isArray(response.data) ? response.data : response.photos || []
+        
+        // Map API response to ProcessedPhoto format
+        posts.value = photoArray.map((photo: Photo): ProcessedPhoto => {
+          const normalized = normalizeFilepath(photo.filepath)
+          return {
+            ...photo,
+            src: normalized,
+            tags: Array.isArray(photo.tags) ? photo.tags : (photo.tags ? String(photo.tags).split(',') : ['Photography'])
+          }
+        })
+        
+        console.log('[Index] Mapped posts:', posts.value.length)
+        console.log('[Index] Albums:', allAlbums.value.length)
+      } else {
+        console.warn('[Index] Invalid response:', response)
       }
     } catch (error) {
-      console.error('Failed to load photos:', error);
+      console.error('[Index] Failed to load photos:', error)
     } finally {
-      loading.value = false;
+      loading.value = false
     }
-  });
+  })
 
   // Cleanup on unmount
   onUnmounted(() => {
@@ -292,11 +312,46 @@
 
   /* Main page container - clean background for content focus */
   .page-container {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     padding: clamp(12px, 3vw, 24px); /* Responsive padding for mobile-first approach */
     font-family: var(--font-body); /* Roboto body font for clean readability */
     transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Animated background gradients */
+  .animated-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: 
+      radial-gradient(ellipse at 20% 30%, rgba(100, 100, 100, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(120, 120, 120, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(90, 90, 90, 0.1) 0%, transparent 50%),
+      linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    background-size: 200% 200%, 250% 250%, 300% 300%, 100% 100%;
+    animation: gradientFlow 25s ease infinite;
+  }
+
+  @keyframes gradientFlow {
+    0%, 100% {
+      background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%;
+    }
+    25% {
+      background-position: 50% 30%, 80% 70%, 70% 40%, 0% 0%;
+    }
+    50% {
+      background-position: 100% 50%, 20% 30%, 30% 70%, 0% 0%;
+    }
+    75% {
+      background-position: 30% 80%, 70% 20%, 80% 30%, 0% 0%;
+    }
   }
 
   /* Heading typography - uses Oswald for editorial impact */
@@ -312,6 +367,8 @@
 
   /* Primary content wrapper - centers content with max-width constraint */
   .main-content {
+    position: relative;
+    z-index: 1;
     max-width: 80rem; /* 1280px - align with header/nav width */
     margin: 0 auto; /* Center alignment */
     padding: 0 clamp(16px, 3vw, 32px) clamp(56px, 8vw, 96px); /* Comfortable bottom padding */
@@ -868,6 +925,28 @@
   @media (max-width: 768px) {
     .main-content {
       padding: 0 1.25rem 8rem; /* Slightly tighter horizontal padding */
+    }
+
+    .hero-section {
+      min-height: 75vh;
+      padding: 2rem 1.5rem;
+    }
+    
+    .about-section,
+    .portfolio-section,
+    .contact-section {
+      padding: 2.5rem 1.5rem;
+    }
+    
+    .animated-background {
+      animation-duration: 30s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animated-background {
+      animation: none;
+      background-position: 50% 50%;
     }
   }
 </style>

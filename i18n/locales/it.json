@@ -41,6 +41,12 @@
     "stats": "Statistiche",
     "signOut": "Esci"
   },
+  "sidebar": {
+    "overview": "Resoconto",
+    "motion": "Motion",
+    "about": "Chi sono",
+    "contact": "Contatti"
+  },
   "errors": {
     "invalidCredentials": "Credenziali non valide",
     "uploadFailed": "Caricamento fallito",

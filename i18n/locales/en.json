@@ -41,6 +41,12 @@
     "stats": "Statistics",
     "signOut": "Sign Out"
   },
+  "sidebar": {
+    "overview": "Overview",
+    "motion": "Motion",
+    "about": "About",
+    "contact": "Contact"
+  },
   "errors": {
     "invalidCredentials": "Invalid credentials",
     "uploadFailed": "Upload failed",

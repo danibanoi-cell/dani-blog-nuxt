@@ -33,24 +33,20 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, computed } from 'vue';
-  import SidebarNav from '../components/SidebarNav.vue';
-  import FooterBar from '../components/FooterBar.vue';
-  import HeaderBar from '../components/HeaderBar.vue';
-  import { useTheme } from '../composables/useTheme';
-  import { useI18n } from 'vue-i18n';
+import { ref } from 'vue'
+import HeaderBar from '~/components/HeaderBar.vue'
+import SidebarNav from '~/components/SidebarNav.vue'
+import FooterBar from '~/components/FooterBar.vue'
+import { useTheme } from '~/composables/useTheme'
 
-  const { t } = useI18n();
+const links = [
+  { label: 'overview', href: '#overview' },
+  { label: 'motion', href: '#motion' },
+  { label: 'about', href: '#about' },
+  { label: 'contact', href: '/contact' },
+]
 
-  // Localized navigation links
-  const links = computed(() => [
-    { label: t('nav.portfolio'), href: '/' },
-    { label: t('index.title'), href: '#motion' },
-    { label: t('nav.about'), href: '#about' },
-    { label: t('nav.contact'), href: '/contact' },
-  ]);
-
-  const sidebarOpen = ref(false);
+const sidebarOpen = ref(false)
 
   const toggleSidebar = () => {
     sidebarOpen.value = !sidebarOpen.value;

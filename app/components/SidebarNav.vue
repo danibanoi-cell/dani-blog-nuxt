@@ -12,15 +12,8 @@
           </svg>
         </button>
         <nav>
-          <NuxtLink
-            v-for="link in links"
-            :key="link.href"
-            :to="link.href"
-            class="nav-link"
-            :class="{ active: isActive(link.href) }"
-            @click="$emit('close')"
-          >
-            <span class="nav-label">{{ link.label }}</span>
+          <NuxtLink v-for="link in links" :key="link.href" :to="link.href" class="nav-link" @click="$emit('close')">
+            {{ $t(link.label) }}
           </NuxtLink>
         </nav>
 
@@ -28,49 +21,17 @@
         <div class="sidebar-controls">
           <div class="toggle-group theme-toggle" role="group" aria-label="Theme">
             <span class="toggle-indicator" :class="{ active: isDark }" aria-hidden="true"></span>
-            <button
-              class="toggle-btn"
-              :class="{ active: !isDark }"
-              type="button"
-              :aria-pressed="!isDark"
-              @click="$emit('set-theme', 'light')"
-            >
-              Light
-            </button>
-            <button
-              class="toggle-btn"
-              :class="{ active: isDark }"
-              type="button"
-              :aria-pressed="isDark"
-              @click="$emit('set-theme', 'dark')"
-            >
-              Dark
-            </button>
+            <button class="toggle-btn" :class="{ active: !isDark }" type="button" :aria-pressed="!isDark"
+              @click="$emit('set-theme', 'light')">Light</button>
+            <button class="toggle-btn" :class="{ active: isDark }" type="button" :aria-pressed="isDark"
+              @click="$emit('set-theme', 'dark')">Dark</button>
           </div>
           <div class="toggle-group language-toggle" role="group" aria-label="Language">
-            <span
-              class="toggle-indicator"
-              :class="{ active: currentLocale === 'en' }"
-              aria-hidden="true"
-            ></span>
-            <button
-              class="toggle-btn"
-              :class="{ active: currentLocale === 'it' }"
-              type="button"
-              :aria-pressed="currentLocale === 'it'"
-              @click="setLanguage('it')"
-            >
-              IT
-            </button>
-            <button
-              class="toggle-btn"
-              :class="{ active: currentLocale === 'en' }"
-              type="button"
-              :aria-pressed="currentLocale === 'en'"
-              @click="setLanguage('en')"
-            >
-              EN
-            </button>
+            <span class="toggle-indicator" :class="{ active: currentLocale === 'en' }" aria-hidden="true"></span>
+            <button class="toggle-btn" :class="{ active: currentLocale === 'it' }" type="button"
+              :aria-pressed="currentLocale === 'it'" @click="setLanguage('it')">IT</button>
+            <button class="toggle-btn" :class="{ active: currentLocale === 'en' }" type="button"
+              :aria-pressed="currentLocale === 'en'" @click="setLanguage('en')">EN</button>
           </div>
         </div>
       </div>
@@ -79,36 +40,33 @@
 </template>
 
 <script setup lang="ts">
-  interface NavLink {
-    label: string;
-    href: string;
-  }
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 
-  defineProps<{ links: NavLink[]; open: boolean; isDark: boolean }>();
-  defineEmits<{
-    (e: 'set-theme', theme: 'light' | 'dark'): void;
-    (e: 'close'): void;
-  }>();
+interface NavLink {
+  label: string
+  href: string
+}
 
-  const { locale } = useI18n();
-  const switchLocalePath = useSwitchLocalePath();
-  const router = useRouter();
-  const route = useRoute();
-  const currentLocale = computed(() => locale.value);
+type Language = 'it' | 'en';
+type Locale = Language;
 
-  const isActive = (href: string) => {
-    try {
-      // consider exact match or prefix match for nested routes
-      return route.path === href || route.path.startsWith(href + '/')
-    } catch {
-      return false
-    }
-  }
+defineProps<{ links: NavLink[]; open: boolean; isDark: boolean }>()
+defineEmits<{
+  (e: 'set-theme', theme: 'light' | 'dark'): void
+  (e: 'close'): void
+}>()
 
-  const setLanguage = async (lang: 'it' | 'en') => {
-    const path = switchLocalePath(lang);
-    await router.push(path);
-  };
+const { t, locale, setLocale } = useI18n<{ locale: Locale; setLocale: (code: Locale) => void }>();
+const switchLocalePath = useSwitchLocalePath()
+const router = useRouter()
+const currentLocale = computed(() => locale.value)
+
+const setLanguage = (lang: 'it' | 'en') => {
+  setLocale(lang);
+  // const path = switchLocalePath(lang)
+  // await router.push(path)
+}
 </script>
 
 <style scoped>

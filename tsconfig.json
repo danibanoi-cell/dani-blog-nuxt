@@ -1,52 +1,35 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
-  "files": [],
+  "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "types": ["node"]
-  },
-  "references": [
-    {
-      "path": "./.nuxt/tsconfig.app.json"
-    },
-    {
-      "path": "./.nuxt/tsconfig.server.json"
-    },
-    {
-      "path": "./.nuxt/tsconfig.shared.json"
-    },
-    {
-      "path": "./.nuxt/tsconfig.node.json"
+    "strict": true,
+    "noEmit": true,
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "types": [
+      "node",
+      "@nuxt/test-utils"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "paths": {
+      "~/*": ["./*"],
+      "#app": [".nuxt"],
+      "#app/*": [".nuxt/*"],
+      "~/server/*": ["./server/*"],
+      "~/app/*": ["./app/*"],
+      "~": ["."]
     }
-  ],
+  },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.vue",
-    "**/*.json",
-    "**/*.md"
+    ".nuxt/**/*.ts",
+    "./**/*.ts",
+    "./**/*.vue"
   ],
   "exclude": [
     "node_modules",
-    ".nuxt",
-    "dist"
-  ],
-  "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "node",
-    "strict": true,
-    "jsx": "preserve",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "~/*": [
-        "./*"
-      ]
-    }
-  }
+    "dist",
+    ".nuxt"
+  ]
 }
