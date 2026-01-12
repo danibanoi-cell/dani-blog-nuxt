@@ -9,8 +9,8 @@
       </div>
 
       <form
-        @submit.prevent="handleLogin"
         class="mt-8 space-y-6 bg-gray-800/50 backdrop-blur-sm p-8 rounded-lg shadow-xl"
+        @submit.prevent="handleLogin"
       >
         <div
           v-if="error"

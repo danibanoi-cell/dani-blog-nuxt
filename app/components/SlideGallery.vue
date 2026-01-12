@@ -9,8 +9,8 @@
       <button
         v-if="canScrollLeft"
         class="nav-btn nav-btn-left"
-        @click="scrollLeft"
         aria-label="Previous"
+        @click="scrollLeft"
       >
         <svg viewBox="0 0 24 24" class="nav-icon">
           <polyline points="15 18 9 12 15 6"></polyline>
@@ -33,9 +33,9 @@
               loop
               playsinline
               :autoplay="isVideo(item.image)"
+              loading="lazy"
               @mouseenter="playVideo($event)"
               @mouseleave="pauseVideo($event)"
-              loading="lazy"
             ></video>
             <img
               v-else
@@ -55,8 +55,8 @@
       <button
         v-if="canScrollRight"
         class="nav-btn nav-btn-right"
-        @click="scrollRight"
         aria-label="Next"
+        @click="scrollRight"
       >
         <svg viewBox="0 0 24 24" class="nav-icon">
           <polyline points="9 18 15 12 9 6"></polyline>
@@ -71,14 +71,14 @@
         :key="index"
         class="dot"
         :class="{ active: index === currentPage }"
-        @click="scrollToPage(index)"
         :aria-label="`Go to page ${index + 1}`"
+        @click="scrollToPage(index)"
       ></button>
       <button
         v-if="autoPlay"
         class="play-btn"
-        @click="toggleAutoPlay"
         :aria-label="isPlaying ? 'Pause' : 'Play'"
+        @click="toggleAutoPlay"
       >
         <svg v-if="!isPlaying" viewBox="0 0 24 24" class="play-icon">
           <polygon points="5 3 19 12 5 21 5 3"></polygon>

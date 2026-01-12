@@ -3,14 +3,13 @@
     <SidebarNav
       :open="sidebarOpen"
       :links="links"
-      :isDark="isDark"
+      :is-dark="isDark"
       @set-theme="setTheme"
       @close="sidebarOpen = false"
     />
     <div class="main-wrapper">
       <div class="masthead">
         <HeaderBar :links="links" brand="danibanoi." @toggle-sidebar="toggleSidebar" />
-
         <!-- Desktop navigation under header (hidden on mobile) -->
         <nav class="desktop-nav" aria-label="Primary Navigation">
           <ul class="desktop-nav-list">
@@ -34,18 +33,22 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue';
-  import HeaderBar from '~/components/HeaderBar.vue';
-  import SidebarNav from '~/components/SidebarNav.vue';
-  import FooterBar from '~/components/FooterBar.vue';
-  import { useTheme } from '~/composables/useTheme';
+  import { ref, onMounted, computed } from 'vue';
+  import SidebarNav from '../components/SidebarNav.vue';
+  import FooterBar from '../components/FooterBar.vue';
+  import HeaderBar from '../components/HeaderBar.vue';
+  import { useTheme } from '../composables/useTheme';
+  import { useI18n } from 'vue-i18n';
 
-  const links = [
-    { label: 'Home', href: '/' },
-    { label: 'Motion', href: '#motion' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '/contact' },
-  ];
+  const { t } = useI18n();
+
+  // Localized navigation links
+  const links = computed(() => [
+    { label: t('nav.portfolio'), href: '/' },
+    { label: t('index.title'), href: '#motion' },
+    { label: t('nav.about'), href: '#about' },
+    { label: t('nav.contact'), href: '/contact' },
+  ]);
 
   const sidebarOpen = ref(false);
 
@@ -86,6 +89,7 @@
 <style>
   /* Global theme variables */
   :root.light {
+    --site-max-width: 1440px; /* global content cap */
     --bg-primary: #ffffff;
     --bg-secondary: #f9f9f9;
     --text-primary: #0f0f0f;
@@ -97,6 +101,7 @@
   }
 
   :root.dark {
+    --site-max-width: 1440px; /* global content cap */
     --bg-primary: #0a0a0a;
     --bg-secondary: #1a1a1a;
     --text-primary: #f0f0f0;
@@ -147,7 +152,7 @@
     .desktop-nav {
       display: block;
       width: 100%;
-      max-width: 1280px;
+      max-width: var(--site-max-width);
       margin: 0 auto;
       padding: 8px 24px 16px 24px; /* small bottom margin effect */
       border-top: 1px solid var(--border-color); /* visual separation from header */
@@ -155,7 +160,7 @@
 
     .desktop-nav-list {
       display: flex;
-      justify-content: center;
+      justify-content: center; /* previous centered layout */
       gap: 32px;
       list-style: none;
 

@@ -4,9 +4,9 @@
     <button
       class="drawer-handle"
       :class="{ active: isVisible }"
-      @click="toggleFooter"
       aria-label="Toggle footer panel"
       title="Toggle footer"
+      @click="toggleFooter"
     >
       <span class="handle-bar"></span>
     </button>

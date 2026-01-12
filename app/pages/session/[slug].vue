@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <main class="main-content" role="main">
-      <section class="intro" v-if="sessionTitle">
+      <section v-if="sessionTitle" class="intro">
         <p class="eyebrow">Session</p>
         <h1 class="headline">{{ sessionTitle }}</h1>
       </section>
@@ -30,9 +30,8 @@
     <!-- Fullscreen lightbox -->
     <Transition name="lightbox">
       <div v-if="fullscreenIndex !== null" class="lightbox" @click="closeFullscreen">
-        <button class="lightbox-close" @click.stop="closeFullscreen" aria-label="Close">×</button>
-        <button class="lightbox-prev" @click.stop="prevPhoto" aria-label="Previous">‹</button>
-        <button class="lightbox-next" @click.stop="nextPhoto" aria-label="Next">›</button>
+        <button class="lightbox-prev" aria-label="Previous" @click.stop="prevPhoto">‹</button>
+        <button class="lightbox-next" aria-label="Next" @click.stop="nextPhoto">›</button>
         <img
           :src="shuffledPhotos[fullscreenIndex]?.filepath"
           :alt="'Fullscreen photo'"
@@ -41,11 +40,39 @@
         />
       </div>
     </Transition>
+
+    <!-- Close button outside lightbox -->
+    <Transition name="lightbox">
+      <button
+        v-if="fullscreenIndex !== null"
+        class="lightbox-close-outside"
+        aria-label="Close gallery"
+        @click="closeFullscreen"
+      >
+        ×
+      </button>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
   import { ref, onMounted } from 'vue';
+
+  // Normalize filepaths returned from the API to web-accessible paths
+  const normalizeFilepath = (fp?: string) => {
+    if (!fp) return ''
+    const s = String(fp)
+    if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/')) return s
+    const cleaned = s.replace(/\\\\/g, '/').trim()
+    if (cleaned.includes('public/uploads/')) {
+      return '/uploads/' + cleaned.split('public/uploads/').pop()
+    }
+    if (cleaned.includes('public/foto-sito/')) {
+      return '/foto-sito/' + cleaned.split('public/foto-sito/').pop()
+    }
+    const parts = cleaned.split('/').filter(Boolean)
+    return parts.length ? `/${parts[parts.length - 1]}` : cleaned
+  }
 
   const route = useRoute();
   const slug = route.params.slug as string;
@@ -101,7 +128,7 @@
     try {
       const res = await $fetch(`/api/sessions/${slug}`);
       if (res.success) {
-        photos.value = res.photos || [];
+        photos.value = (res.photos || []).map((p: any) => ({ ...p, filepath: normalizeFilepath(p.filepath) }));
         shuffledPhotos.value = shuffle(photos.value);
 
         sessionTitle.value = slug.replace(/-/g, ' ');
@@ -337,7 +364,33 @@
     transform: translateY(-50%) scale(1.1);
   }
 
-  /* Lightbox transitions */
+  /* Close button outside lightbox */
+  .lightbox-close-outside {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 2.5rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    z-index: 10001;
+    line-height: 1;
+  }
+
+  .lightbox-close-outside:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
   .lightbox-enter-active,
   .lightbox-leave-active {
     transition: opacity 0.4s ease;

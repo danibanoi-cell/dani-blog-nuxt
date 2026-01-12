@@ -4,16 +4,13 @@
     <div class="copyright-icon" aria-hidden="true">©</div>
     <div class="copyright-text">
       <p class="copyright-main">
-        <strong>© {{ currentYear }} danibanoi.</strong> • Verona, Italia
+        <strong>{{ $t('copyright.main', { year: currentYear }) }}</strong>
       </p>
       <p class="copyright-details">
-        Tutte le fotografie presenti su questo sito sono opere originali e protette da diritti
-        d'autore. È vietata la riproduzione, distribuzione o utilizzo non autorizzato. Per licenze e
-        utilizzi commerciali, contattami. Valpolicella • Lago di Garda • Verona
+        {{ $t('copyright.details') }}
       </p>
       <p class="copyright-legal">
-        All photographs are protected by copyright law. Unauthorized reproduction, distribution, or
-        use is strictly prohibited. For licensing and commissions, please get in touch.
+        {{ $t('copyright.legal') }}
       </p>
     </div>
   </div>

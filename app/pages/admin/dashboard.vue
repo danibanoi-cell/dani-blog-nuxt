@@ -8,8 +8,8 @@
         <div class="flex items-center justify-between">
           <h1 class="font-display text-3xl">Dashboard</h1>
           <button
-            @click="handleLogout"
             class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm border border-white/20"
+            @click="handleLogout"
           >
             Logout
           </button>
@@ -45,9 +45,9 @@
             <p class="text-gray-300">Seleziona una sezione sopra per iniziare.</p>
           </div>
           <div v-else-if="activeTab === 'upload'" key="upload" class="panel">
-            <h2 class="text-xl font-semibold mb-4">Upload New Photo</h2>
+            <h2 class="text-xl font-semibold mb-4">Create New Album</h2>
 
-            <form @submit.prevent="handleUpload" class="space-y-4">
+            <form class="space-y-4" @submit.prevent="handleAlbumUpload">
               <div
                 v-if="uploadError"
                 class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded"
@@ -64,91 +64,57 @@
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium mb-1">Title *</label>
+                  <label class="block text-sm font-medium mb-1">Album Name *</label>
                   <input
-                    v-model="newPhoto.title"
+                    v-model="newAlbum.name"
                     required
                     type="text"
                     class="input-field"
-                    placeholder="Evening Practice"
+                    placeholder="Album Name"
                   />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium mb-1">Location</label>
+                  <label class="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    v-model="newAlbum.description"
+                    rows="3"
+                    class="input-field"
+                    placeholder="Album Description"
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium mb-1">Tags (comma separated)</label>
                   <input
-                    v-model="newPhoto.location"
+                    v-model="albumTagsInput"
                     type="text"
                     class="input-field"
-                    placeholder="Lisbon"
+                    placeholder="Tag1, Tag2"
                   />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium mb-1">Category</label>
+                  <label class="block text-sm font-medium mb-1">Upload First File (Video or Image) *</label>
                   <input
-                    v-model="newPhoto.category"
-                    type="text"
+                    ref="albumFileInput"
+                    type="file"
+                    required
+                    accept="video/*,image/*"
                     class="input-field"
-                    placeholder="Personal"
                   />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium mb-1">Session (folder)</label>
+                  <label class="block text-sm font-medium mb-1">Upload Additional Photos</label>
                   <input
-                    v-model="newPhoto.session_slug"
-                    type="text"
+                    ref="additionalFilesInput"
+                    type="file"
+                    multiple
+                    accept="image/*"
                     class="input-field"
-                    placeholder="e.g. alice-portrait, lisbon-2025"
                   />
                 </div>
-
-                <div>
-                  <label class="block text-sm font-medium mb-1">Date Taken</label>
-                  <input v-model="newPhoto.date_taken" type="date" class="input-field" />
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium mb-1">Excerpt</label>
-                <textarea
-                  v-model="newPhoto.excerpt"
-                  rows="3"
-                  class="input-field"
-                  placeholder="A brief description..."
-                ></textarea>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium mb-1">Tags (comma separated)</label>
-                <input
-                  v-model="tagsInput"
-                  type="text"
-                  class="input-field"
-                  placeholder="Basketball, Night, Urban, Sports"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium mb-1">Photo File *</label>
-                <input
-                  ref="fileInput"
-                  type="file"
-                  required
-                  accept="image/*"
-                  class="w-full px-4 py-2 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/30 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-white/20 file:bg-white/10 file:text-white hover:file:bg-white/20"
-                />
-              </div>
-
-              <div class="flex items-center">
-                <input
-                  v-model="newPhoto.published"
-                  type="checkbox"
-                  id="published"
-                  class="w-4 h-4 text-white bg-gray-700 border-gray-600 rounded focus:ring-2 focus:ring-white/20"
-                />
-                <label for="published" class="ml-2 text-sm">Publish immediately</label>
               </div>
 
               <button
@@ -157,7 +123,7 @@
                 class="w-full md:w-auto px-6 py-3 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed btn-solid"
               >
                 <span v-if="uploading">Uploading...</span>
-                <span v-else>Upload Photo</span>
+                <span v-else>Upload Album</span>
               </button>
             </form>
           </div>
@@ -183,50 +149,55 @@
                     <h3 class="text-lg font-semibold">{{ album.title }}</h3>
                   </div>
                   <div class="flex items-center gap-3">
-                    <span class="text-xs text-gray-400">{{ album.count }} foto</span>
+                    <span class="text-xs text-gray-400">{{ album.count }} photos</span>
                     <button
                       class="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded transition"
                       @click="toggleAlbum(album.slug)"
                     >
-                      {{ expandedAlbums[album.slug] ? 'Mostra recenti' : 'Mostra tutte' }}
+                      {{ expandedAlbums[album.slug] ? 'Collapse' : 'Expand' }}
                     </button>
                   </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <transition name="fade-slide">
                   <div
-                    v-for="photo in expandedAlbums[album.slug] ? album.items : album.recentItems"
-                    :key="photo.id"
-                    class="bg-white/5 border border-white/10 rounded-lg overflow-hidden backdrop-blur-sm"
+                    v-if="expandedAlbums[album.slug]"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                   >
-                    <img
-                      :src="photo.filepath"
-                      :alt="photo.title"
-                      class="w-full h-48 object-cover"
-                    />
-                    <div class="p-4">
-                      <h3 class="font-semibold mb-1">{{ photo.title }}</h3>
-                      <p class="text-sm text-gray-400 mb-1">{{ photo.location }}</p>
-                      <p class="text-xs text-gray-400 mb-2">
-                        Uploaded: {{ formatDate(photo.created_at || photo.updated_at) }}
-                      </p>
-                      <div class="flex flex-wrap gap-1 mb-3">
-                        <span
-                          v-for="tag in photo.tags"
-                          :key="tag"
-                          class="text-xs px-2 py-1 bg-white/10 border border-white/20 rounded"
+                    <div
+                      v-for="photo in album.items"
+                      :key="photo.id"
+                      class="bg-white/5 border border-white/10 rounded-lg overflow-hidden backdrop-blur-sm"
+                    >
+                      <img
+                        :src="photo.filepath"
+                        :alt="photo.title"
+                        class="w-full h-48 object-cover"
+                      />
+                      <div class="p-4">
+                        <h3 class="font-semibold mb-1">{{ photo.title }}</h3>
+                        <p class="text-sm text-gray-400 mb-1">{{ photo.location }}</p>
+                        <p class="text-xs text-gray-400 mb-2">
+                          Uploaded: {{ formatDate(photo.created_at || photo.updated_at) }}
+                        </p>
+                        <div class="flex flex-wrap gap-1 mb-3">
+                          <span
+                            v-for="tag in photo.tags"
+                            :key="tag"
+                            class="text-xs px-2 py-1 bg-white/10 border border-white/20 rounded"
+                          >
+                            {{ tag }}
+                          </span>
+                        </div>
+                        <button
+                          class="w-full px-3 py-2 text-sm transition btn-danger"
+                          @click="deletePhoto(photo.id)"
                         >
-                          {{ tag }}
-                        </span>
+                          Delete
+                        </button>
                       </div>
-                      <button
-                        @click="deletePhoto(photo.id)"
-                        class="w-full px-3 py-2 text-sm transition btn-danger"
-                      >
-                        Delete
-                      </button>
                     </div>
                   </div>
-                </div>
+                </transition>
               </div>
             </div>
           </div>
@@ -325,7 +296,7 @@
                   >
                     Nessun dato disponibile
                   </div>
-                  <div v-else v-for="(page, idx) in stats.topPages" :key="idx" class="page-item">
+                  <div v-for="(page, idx) in stats.topPages" v-else :key="idx" class="page-item">
                     <div class="page-info">
                       <span class="page-rank">{{ idx + 1 }}</span>
                       <span class="page-url">{{ page.url }}</span>
@@ -361,7 +332,15 @@
     published: true,
   });
 
-  const activeTab = ref<'home' | 'upload' | 'existing' | 'stats'>('home');
+  const newAlbum = ref({
+    name: '',
+    description: '',
+  });
+  const albumTagsInput = ref('');
+  const albumFileInput = ref<HTMLInputElement | null>(null);
+  const additionalFilesInput = ref<HTMLInputElement | null>(null);
+
+  const activeTab = ref<'home' | 'upload' | 'existing' | 'stats'>('existing');
 
   const photos = ref<any[]>([]);
   const sessions = ref<any[]>([]);
@@ -404,6 +383,18 @@
           hour: '2-digit',
           minute: '2-digit',
         });
+  };
+
+  // Normalize filepaths from DB to web-accessible paths
+  const normalizeFilepath = (path: string) => {
+    if (!path) return '';
+    // If it's already a web path, return as is
+    if (path.startsWith('/foto-sito/') || path.startsWith('/uploads/')) {
+      return path;
+    }
+    // Extract filename from full filesystem path
+    const filename = path.split('/').pop();
+    return `/foto-sito/${filename}`;
   };
 
   // Map session_slug to metadata (title, cover, count)
@@ -516,7 +507,8 @@
     loading.value = true;
     try {
       const response = await $fetch('/api/photos?published=false');
-      photos.value = response.photos || [];
+      // Normalize filepaths so images load correctly in dev even if DB stores filesystem paths
+      photos.value = (response.photos || []).map((p: any) => ({ ...p, filepath: normalizeFilepath(p.filepath) }));
     } catch (error) {
       console.error('Failed to fetch photos:', error);
     } finally {
@@ -638,6 +630,67 @@
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     navigateTo('/admin/login');
+  };
+
+  const handleAlbumUpload = async () => {
+    uploading.value = true;
+    uploadError.value = '';
+    uploadSuccess.value = '';
+
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        navigateTo('/admin/login');
+        return;
+      }
+
+      const first = albumFileInput.value?.files?.[0];
+      if (!first) throw new Error('First file is required');
+
+      const formData = new FormData();
+      formData.append('name', newAlbum.value.name);
+      formData.append('description', newAlbum.value.description);
+      formData.append('tags', albumTagsInput.value || '');
+      formData.append('firstFile', first);
+
+      const additional = additionalFilesInput.value?.files;
+      if (additional && additional.length > 0) {
+        Array.from(additional).forEach((file, index) => {
+          formData.append(`additionalFiles[${index}]`, file);
+        });
+      }
+
+      const response = await fetch('/api/photos/albums', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const txt = await response.text();
+        throw new Error(`Failed to upload album: ${txt}`);
+      }
+
+      uploadSuccess.value = 'Album uploaded successfully!';
+
+      // Refresh photos and sessions
+      await fetchPhotos();
+      await fetchSessions();
+
+      // Reset form
+      newAlbum.value = { name: '', description: '' };
+      albumTagsInput.value = '';
+      if (albumFileInput.value) albumFileInput.value.value = '';
+      if (additionalFilesInput.value) additionalFilesInput.value.value = '';
+
+      setTimeout(() => (uploadSuccess.value = ''), 3000);
+    } catch (error: any) {
+      uploadError.value = error?.message || 'Album upload failed';
+    } finally {
+      uploading.value = false;
+    }
   };
 </script>
 

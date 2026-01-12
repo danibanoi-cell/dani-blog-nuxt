@@ -30,7 +30,7 @@
 
         <!-- Load More Albums Button - Only after 5 albums -->
         <div v-if="hasMoreAlbums" class="load-more-albums-container">
-          <button @click="loadMoreAlbums" class="action-btn load-more-albums">
+          <button class="action-btn load-more-albums" @click="loadMoreAlbums">
             <span>{{ $t('index.loadMoreAlbums') }}</span>
             <svg viewBox="0 0 24 24" class="btn-icon">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -48,7 +48,7 @@
     <!-- Fullscreen Lightbox -->
     <Transition name="lightbox-fade">
       <div v-if="lightboxOpen" class="lightbox-overlay" @click="closeLightbox">
-        <button class="lightbox-close" @click="closeLightbox" aria-label="Close">
+        <button class="lightbox-close" aria-label="Close" @click="closeLightbox">
           <svg viewBox="0 0 24 24" class="close-icon">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -58,8 +58,8 @@
         <button
           v-if="currentImageIndex > 0"
           class="lightbox-nav lightbox-prev"
-          @click.stop="prevImage"
           aria-label="Previous"
+          @click.stop="prevImage"
         >
           <svg viewBox="0 0 24 24" class="nav-arrow">
             <polyline points="15 18 9 12 15 6"></polyline>
@@ -83,8 +83,8 @@
         <button
           v-if="currentImageIndex < lightboxImages.length - 1"
           class="lightbox-nav lightbox-next"
-          @click.stop="nextImage"
           aria-label="Next"
+          @click.stop="nextImage"
         >
           <svg viewBox="0 0 24 24" class="nav-arrow">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -102,44 +102,42 @@
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted } from 'vue';
 
-  // SEO: Page-specific meta tags for photography portfolio
+  // SEO: Page-specific meta tags for photography portfolio (localized)
+  const { t } = useI18n();
+
   useHead({
-    title: ' danibanoi Photography  ',
+    title: t('index.title'),
     meta: [
-      {
-        name: 'description',
-        content:
-          'Fotografo professionista a Verona, Italia. Travel e documentary photography da Valpolicella, Lago di Garda. Ritratti, street photography e progetti personali.',
-      },
-      {
-        name: 'keywords',
-        content:
-          'fotografo Verona, photography Valpolicella, Lago di Garda photographer, travel photography Italia, Dani Banoi',
-      },
-      {
-        property: 'og:title',
-        content: 'Dani Banoi Photography | Verona, Valpolicella, Lago di Garda',
-      },
-      {
-        property: 'og:description',
-        content:
-          'Fotografo professionista a Verona. Travel e documentary photography da Valpolicella e Lago di Garda.',
-      },
+      { name: 'description', content: t('index.description') },
+      { name: 'keywords', content: t('index.keywords') || 'fotografo Verona, photography Valpolicella, Lago di Garda' },
+      { property: 'og:title', content: t('index.ogTitle') || t('index.title') },
+      { property: 'og:description', content: t('index.ogDescription') || t('index.description') },
       { property: 'og:type', content: 'website' },
-      { property: 'og:locale', content: 'it_IT' },
+      { property: 'og:locale', content: process.env.I18N_LOCALE || 'it_IT' },
       { name: 'geo.region', content: 'IT-VR' },
       { name: 'geo.placename', content: 'Verona' },
-      { name: 'twitter:title', content: 'Dani Banoi Photography | Verona, Italia' },
-      {
-        name: 'twitter:description',
-        content: 'Travel e documentary photography da Verona, Valpolicella, Lago di Garda.',
-      },
+      { name: 'twitter:title', content: t('index.twitterTitle') || t('index.title') },
+      { name: 'twitter:description', content: t('index.twitterDescription') || t('index.description') },
     ],
-    link: [
-      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-      { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' },
-    ],
+    link: [{ rel: 'preconnect', href: 'https://fonts.googleapis.com' }, { rel: 'dns-prefetch', href: 'https://fonts.googleapis.com' }],
   });
+
+  // Normalize filepaths returned from the API to web-accessible paths
+  const normalizeFilepath = (fp?: string) => {
+    if (!fp) return ''
+    const s = String(fp)
+    if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('/')) return s
+    const cleaned = s.replace(/\\\\/g, '/').trim()
+    if (cleaned.includes('public/uploads/')) {
+      return '/uploads/' + cleaned.split('public/uploads/').pop()
+    }
+    if (cleaned.includes('public/foto-sito/')) {
+      return '/foto-sito/' + cleaned.split('public/foto-sito/').pop()
+    }
+    // Fallback to basename
+    const parts = cleaned.split('/').filter(Boolean)
+    return parts.length ? `/${parts[parts.length - 1]}` : cleaned
+  }
 
   // Posts feed loaded from API
   const posts = ref<any[]>([]);
@@ -257,7 +255,7 @@
       if (response.success && Array.isArray(response.photos)) {
         // Map API response to post format with SEO-friendly data structure
         posts.value = response.photos.map((photo: any) => ({
-          src: photo.filepath,
+          src: normalizeFilepath(photo.filepath),
           title: photo.title,
           session_slug: photo.session_slug,
           location: photo.location || 'Studio',
@@ -332,6 +330,7 @@
 
   .album-section {
     width: 100%;
+    scroll-snap-align: start; /* Snap to the start of each album section */
   }
 
   /* Load More Albums Section */
@@ -607,8 +606,8 @@
   /* Hero introduction block - sets context for page content */
   .intro {
     max-width: 56rem; /* 896px - optimal line length for readability */
-    padding: clamp(16px, 3vw, 24px) 0;
-    margin-bottom: clamp(32px, 6vw, 56px); /* Clear separation from content below */
+    padding: clamp(32px, 6vw, 48px) 0; /* Increased padding for more space */
+    margin-bottom: clamp(64px, 12vw, 112px); /* Increased margin for more separation */
     text-align: center; /* Center-align all intro text */
     margin-left: auto;
     margin-right: auto;
@@ -621,6 +620,7 @@
     font-size: 0.875rem; /* 14px - subtle size */
     color: var(--text-muted);
     transition: color 0.3s ease;
+    text-align: center; /* Explicitly center */
   }
 
   /* Main headline - primary H1 for SEO and visual hierarchy */
@@ -641,13 +641,13 @@
 
   /* Lead paragraph - introductory copy below headline */
   .lede {
-    display: flex;
-    justify-content: center;
     font-size: 1rem; /* 16px base */
     line-height: 1.6; /* Generous line height for readability */
     max-width: 48rem; /* 768px - optimal paragraph width */
     color: var(--text-secondary);
     transition: color 0.3s ease;
+    text-align: center; /* Center the text */
+    margin: 0 auto; /* Center the block */
   }
 
   /* Desktop lede text scaling */

@@ -13,6 +13,11 @@
     "eyebrow": "Fotografia di ritratto & editoriale",
     "headline": "Momenti autentici, raccontati con eleganza",
     "payoff": "Fotografo con base a Verona, cattugo storie attraverso ritratti raffinati e immagini editoriali. Ogni fotografia è un'opera originale che celebra l'autenticità e l'emozione del momento.",
+    "keywords": "fotografo Verona, fotografia travel, fotografia documentaria, Dani Banoi",
+    "ogTitle": "Dani Banoi Photography | Verona, Valpolicella, Lago di Garda",
+    "ogDescription": "Fotografo con base a Verona. Travel e documentary photography da Valpolicella e Lago di Garda.",
+    "twitterTitle": "Dani Banoi Photography | Verona, Italia",
+    "twitterDescription": "Travel e documentary photography da Verona, Valpolicella e Lago di Garda.",
     "loadingAlbums": "Caricamento album...",
     "loadMoreAlbums": "Carica altri album",
     "showingAlbums": "Mostrando {current} di {total} album"
@@ -45,5 +50,10 @@
     "invalidCredentials": "Credenziali non valide",
     "uploadFailed": "Caricamento fallito",
     "loadingFailed": "Errore nel caricamento dei dati"
+  },
+  "copyright": {
+    "main": "© {year} danibanoi. • Verona, Italia",
+    "details": "Tutte le fotografie presenti su questo sito sono opere originali e protette da diritti d'autore. È vietata la riproduzione, distribuzione o utilizzo non autorizzato. Per licenze e utilizzi commerciali, contattami. Valpolicella • Lago di Garda • Verona",
+    "legal": "All photographs are protected by copyright law. Unauthorized reproduction, distribution, or use is strictly prohibited. For licensing and commissions, please get in touch."
   }
 }

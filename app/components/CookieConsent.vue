@@ -10,8 +10,8 @@
           <a href="#privacy" class="cookie-link">privacy policy</a>.
         </p>
         <div class="cookie-actions">
-          <button @click="acceptCookies" class="cookie-btn cookie-btn-accept">Accetta</button>
-          <button @click="declineCookies" class="cookie-btn cookie-btn-decline">Rifiuta</button>
+          <button class="cookie-btn cookie-btn-accept" @click="acceptCookies">Accetta</button>
+          <button class="cookie-btn cookie-btn-decline" @click="declineCookies">Rifiuta</button>
         </div>
       </div>
     </div>

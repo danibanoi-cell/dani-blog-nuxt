@@ -83,7 +83,7 @@
     padding: 20px 40px;
     background: var(--bg-primary);
     border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
-    max-width: 1440px;
+    max-width: var(--site-max-width);
     margin: 0 auto;
     width: 100%;
     transition: background-color 0.3s ease;

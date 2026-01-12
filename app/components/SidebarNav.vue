@@ -5,7 +5,7 @@
   <Transition name="sidebar-slide">
     <aside v-show="open" class="sidebar" aria-label="Navigation">
       <div class="sidebar-content">
-        <button class="close" type="button" @click="$emit('close')" aria-label="Close navigation">
+        <button class="close" type="button" aria-label="Close navigation" @click="$emit('close')">
           <svg viewBox="0 0 24 24" class="close-icon">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -17,9 +17,10 @@
             :key="link.href"
             :to="link.href"
             class="nav-link"
+            :class="{ active: isActive(link.href) }"
             @click="$emit('close')"
           >
-            {{ link.label }}
+            <span class="nav-label">{{ link.label }}</span>
           </NuxtLink>
         </nav>
 
@@ -92,7 +93,17 @@
   const { locale } = useI18n();
   const switchLocalePath = useSwitchLocalePath();
   const router = useRouter();
+  const route = useRoute();
   const currentLocale = computed(() => locale.value);
+
+  const isActive = (href: string) => {
+    try {
+      // consider exact match or prefix match for nested routes
+      return route.path === href || route.path.startsWith(href + '/')
+    } catch {
+      return false
+    }
+  }
 
   const setLanguage = async (lang: 'it' | 'en') => {
     const path = switchLocalePath(lang);
@@ -161,30 +172,34 @@
   nav {
     display: flex;
     flex-direction: column;
-    gap: 32px;
-    align-items: center;
+    gap: 10px;
+    align-items: stretch;
   }
-
   .nav-link {
+    display: block;
+    width: 100%;
+    padding: 8px 0;
     text-decoration: none;
-    color: var(--text-primary, #222);
-    font-size: 1.1rem;
+    color: var(--text-primary, #0b1020);
+    background: transparent;
+    font-size: 1rem;
     font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: capitalize;
-    transition: opacity 0.3s ease;
-    padding: 16px 0;
-    border-bottom: 2px solid transparent;
+    letter-spacing: 0.01em;
+    transition: color 0.12s ease;
     cursor: pointer;
-    text-align: center;
+    text-align: left;
   }
 
   .nav-link:hover {
-    opacity: 0.7;
+    color: var(--accent, #a44a48);
   }
 
-  .nav-link.router-link-active {
-    border-bottom-color: var(--text-primary);
+  .nav-label {
+    display: inline-block;
+  }
+
+  .nav-link.active {
+    color: var(--accent-dark, #7a2f2e);
   }
 
   /* Transitions */

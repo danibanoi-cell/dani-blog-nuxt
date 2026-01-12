@@ -8,11 +8,16 @@
     "logout": "Logout"
   },
   "index": {
-    "title": "Professional Photography",
-    "description": "Discover professional photography albums",
+    "title": "danibanoiPH ",
+    "description": "discover my photography",
     "eyebrow": "grab a coffee & stay .",
     "headline": "Espresso. Chaos. Life.",
-    "payoff": "Verona-based photographer capturing stories through refined portraits and editorial imagery. Every photograph is an original work celebrating the authenticity and emotion of the moment.",
+    "payoff": "capturing the world exactly as I see it—messy, beautiful, and authentic. I don't do poses and I don't do perfect. I just love capturing genuine life while having a laugh. If that sounds like your vibe, welcome to my world.",
+    "keywords": "fotografo Verona, travel photography, documentary photography, Dani Banoi",
+    "ogTitle": "Dani Banoi Photography | Verona, Valpolicella, Lago di Garda",
+    "ogDescription": "Verona-based photographer. Travel & documentary photography from Valpolicella and Lake Garda.",
+    "twitterTitle": "Dani Banoi Photography | Verona, Italy",
+    "twitterDescription": "Travel and documentary photography from Verona, Valpolicella and Lake Garda.",
     "loadingAlbums": "Loading albums...",
     "loadMoreAlbums": "Load more albums",
     "showingAlbums": "Showing {current} of {total} albums"
@@ -45,5 +50,10 @@
     "invalidCredentials": "Invalid credentials",
     "uploadFailed": "Upload failed",
     "loadingFailed": "Failed to load data"
+  },
+  "copyright": {
+    "main": "© {year} danibanoi. • Verona, Italy",
+    "details": "All photographs on this website are original works protected by copyright. Reproduction, distribution, or unauthorized use is prohibited. For licenses and commercial use, please contact me. Valpolicella • Lake Garda • Verona",
+    "legal": "All photographs are protected by copyright law. Unauthorized reproduction, distribution, or use is strictly prohibited. For licensing and commissions, please get in touch."
   }
 }

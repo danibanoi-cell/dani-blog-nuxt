@@ -1,7 +1,7 @@
 <template>
   <header class="header">
     <!-- Left: burger menu -->
-    <button class="menu-btn" type="button" @click="$emit('toggle-sidebar')" aria-label="Open menu">
+    <button class="menu-btn" type="button" aria-label="Open menu" @click="$emit('toggle-sidebar')">
       <span></span>
       <span></span>
       <span></span>
@@ -62,14 +62,15 @@
 <style scoped>
   .header {
     position: static; /* sticky moved to wrapper in layout */
-    min-height: 10rem;
+    min-height: 7rem;
     z-index: 200;
     display: grid;
     grid-template-columns: auto 1fr auto; /* left / center / right */
+    column-gap: 18px;
     align-items: center;
-    padding: 20px 40px;
+    padding: 18px 32px;
     background: var(--bg-primary);
-    max-width: 1280px; /* align with nav width */
+    max-width: var(--site-max-width); /* align with site width cap */
     margin: 0 auto;
     width: 100%;
     transition: background-color 0.3s ease;
@@ -78,19 +79,22 @@
     display: inline-flex;
     align-items: center;
     font-size: 2.25em;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     text-transform: none;
-    color: var(--text-primary);
+    color: var(--text-strong, #f8fafc);
     justify-self: center; /* center column */
     transition: color 0.3s ease;
     text-decoration: none;
     cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    padding: 6px 10px;
+    border-radius: 12px;
   }
 
   .brand-text {
     line-height: 1;
-    font-family: var(--font-body); /* Roboto */
+    font-family: var(--font-heading, var(--font-body)); /* Prefer heading font for stronger weight */
     text-transform: lowercase;
   }
 
@@ -115,8 +119,8 @@
 
   .menu-btn {
     justify-self: start; /* left column */
-    width: 36px;
-    height: 28px;
+    width: 38px;
+    height: 26px;
     display: flex; /* always visible as burger */
     flex-direction: column;
     justify-content: space-between;
@@ -124,14 +128,15 @@
     border: none;
     padding: 4px 0;
     cursor: pointer;
+    border-radius: 10px;
   }
 
   .menu-btn span {
     display: block;
-    height: 2px;
+    height: 2.5px;
     background: var(--text-primary);
-    border-radius: 2px;
-    transition: background-color 0.3s ease;
+    border-radius: 3px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
   }
 
   /* Right actions container */
@@ -139,7 +144,7 @@
     justify-self: end;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 14px;
   }
 
   /* Theme toggle button */
@@ -174,7 +179,19 @@
   @media (max-width: 900px) {
     .header {
       gap: 8px;
-      padding: 16px 16px;
+      padding: 14px 18px;
+    }
+
+    .brand {
+      font-size: 1.9em;
+      letter-spacing: 0.04em;
+      padding: 4px 8px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .brand {
+      font-size: 2.35em;
     }
   }
 
