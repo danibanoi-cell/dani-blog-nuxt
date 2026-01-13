@@ -176,7 +176,8 @@
     display: block;
   }
 
-  @media (max-width: 900px) {
+  /* Tablet (481px - 768px) & Smartphone (320px - 480px) */
+  @media (max-width: 768px) {
     .header {
       gap: 8px;
       padding: 14px 18px;
@@ -189,14 +190,15 @@
     }
   }
 
-  @media (min-width: 1280px) {
+  /* Laptop (769px+) - Desktop grandi (1200px+) */
+  @media (min-width: 1200px) {
     .brand {
       font-size: 2.35em;
     }
   }
 
-  /* Hide burger on desktop */
-  @media (min-width: 901px) {
+  /* Hide burger on Laptop / Desktop (769px+) */
+  @media (min-width: 769px) {
     .menu-btn {
       display: none;
     }

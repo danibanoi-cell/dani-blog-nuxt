@@ -199,7 +199,8 @@
     stroke-linejoin: round;
   }
 
-  @media (max-width: 640px) {
+  /* Smartphone (320px - 480px) */
+  @media (max-width: 480px) {
     .footer {
       padding: 20px;
       min-height: 8rem;

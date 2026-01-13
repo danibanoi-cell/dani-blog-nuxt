@@ -267,7 +267,8 @@ const setLanguage = (lang: 'it' | 'en') => {
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   }
 
-  @media (min-width: 865px) {
+  /* Laptop (769px+) - larger sidebar on desktop */
+  @media (min-width: 769px) {
     .sidebar {
       width: 350px;
       box-shadow: 8px 0 24px var(--shadow-color, rgba(0, 0, 0, 0.15));

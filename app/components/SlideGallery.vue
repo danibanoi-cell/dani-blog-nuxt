@@ -42,7 +42,10 @@
               :src="item.image"
               :alt="item.title || `Image ${index + 1}`"
               class="card-image"
-              loading="lazy"
+                loading="lazy"
+                decoding="async"
+                width="1200"
+                height="800"
             />
           </div>
           <div v-if="item.title || item.description" class="card-content">
@@ -376,6 +379,7 @@
     height: 900px;
     overflow: hidden;
     background: var(--bg-secondary);
+      aspect-ratio: 4 / 3; /* Stabilizza layout e previene CLS */
   }
 
   .card-image {
@@ -514,16 +518,9 @@
   }
 
   /* Responsive */
-  @media (max-width: 1400px) {
-    .carousel-card {
-      width: 650px;
-    }
+  /* Desktop grandi (1200px+) - default */
 
-    .card-image-wrapper {
-      height: 750px;
-    }
-  }
-
+  /* Laptop / Desktop piccoli (769px - 1024px) */
   @media (max-width: 1024px) {
     .carousel-card {
       width: 550px;
@@ -534,6 +531,7 @@
     }
   }
 
+  /* Tablet (481px - 768px) */
   @media (max-width: 768px) {
     .slide-gallery {
       padding: 40px 20px;
@@ -562,6 +560,7 @@
     }
   }
 
+  /* Smartphone (320px - 480px) */
   @media (max-width: 480px) {
     .carousel-card {
       width: min(92vw, 360px);

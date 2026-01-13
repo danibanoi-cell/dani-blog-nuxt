@@ -168,8 +168,8 @@
    RESPONSIVE ADJUSTMENTS
    ============================================ */
 
-  /* Mobile - stack buttons vertically */
-  @media (max-width: 640px) {
+  /* Smartphone (320px - 480px) & Tablet (481px - 768px) - stack buttons vertically */
+  @media (max-width: 768px) {
     .cookie-banner {
       padding: 1.25rem;
     }
