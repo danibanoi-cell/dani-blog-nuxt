@@ -1,16 +1,56 @@
 <template>
   <!-- SEO: Main page container with semantic HTML structure -->
-  <div class="page-container" itemscope itemtype="https://schema.org/CollectionPage">
-    <div class="animated-background"></div>
-    <!-- SEO: Main content area for better accessibility and crawling -->
+  <div class="page-container" :class="{ 'landing-active': !landingDone }" itemscope itemtype="https://schema.org/CollectionPage">
+    
+    <!-- LANDING PAGE OVERLAY - Independent fixed overlay that slides up on scroll -->
+    <div class="landing-wrapper">
+      <!-- KINFOLK-INSPIRED LANDING SECTION -->
+      <section class="landing-section" aria-labelledby="landing-title" @click="finishLanding">
+        <div class="landing-grid">
+          <!-- Left Column: Text Content -->
+          <div class="landing-text">
+            <h1 id="landing-title" class="landing-title">{{ $t('landing.title') || 'Dani Banoi' }}</h1>
+            <p class="landing-subtitle">{{ $t('landing.subtitle') || 'Fotografo | Verona' }}</p>
+            <p class="landing-description">{{ $t('landing.description') || 'Storie raccontate attraverso la luce e l\'autenticità del momento.' }}</p>
+          </div>
+          
+          <!-- Right Column: Vertical Photo -->
+          <div class="landing-photo">
+            <img 
+              :src="randomHeroImage?.src || heroImages?.[0]?.src || ''" 
+              :alt="randomHeroImage?.alt || heroImages?.[0]?.alt || ''"
+              class="landing-image"
+            />
+          </div>
+        </div>
+        
+        <!-- Scroll Indicator removed per request -->
+      </section>
+    </div>
+
+    <!-- FULLSCREEN PHOTO SECTION - First content element -->
+    <section class="photo-section">
+      <img 
+        src="/foto-sito/alice_alice-portrait-elegance_1_1766139336530.jpg"
+        alt="Featured photography"
+        class="section-image"
+      />
+
+      <!-- Kinfolk-like caption overlay that reacts to scroll -->
+      <div class="kinfolk-caption" aria-hidden="true">
+        <div class="kinfolk-caption-inner">
+          <p class="kinfolk-eyebrow">{{ $t('index.eyebrow') }}</p>
+          <h2 class="kinfolk-headline">{{ $t('index.headline') }}</h2>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ALBUMS SECTION -->
     <main class="main-content" role="main">
-      <!-- SEO: Introduction section with primary keywords and page context -->
-      <section class="intro" aria-labelledby="main-headline">
+      <section class="intro" aria-labelledby="albums-headline">
         <p class="eyebrow">{{ $t('index.eyebrow') }}</p>
-        <h1 id="main-headline" class="headline" itemprop="name">{{ $t('index.headline') }}</h1>
+        <h2 id="albums-headline" class="headline" itemprop="name">{{ $t('index.headline') }}</h2>
         <p class="lede" itemprop="description">{{ $t('index.payoff') }}</p>
-        <!-- SEO: Visual scroll indicator for user engagement -->
-        <!-- <div class="scroll-hint" aria-hidden="true">scroll ⬇</div> -->
       </section>
 
       <!-- Albums with Horizontal Galleries -->
@@ -25,11 +65,10 @@
             :title="album.title"
             :subtitle="`${album.location} • ${album.date}`"
             :auto-play="false"
-            @card-click="(item, index) => openLightbox(album.allPhotos, index)"
+            @card-click="(item: AlbumPhoto, index: number) => openLightbox(album.allPhotos, index)"
           />
         </div>
 
-        <!-- Load More Albums Button - Only after 5 albums -->
         <div v-if="hasMoreAlbums" class="load-more-albums-container">
           <button class="action-btn load-more-albums" @click="loadMoreAlbums">
             <span>{{ $t('index.loadMoreAlbums') }}</span>
@@ -41,59 +80,9 @@
             {{ $t('index.showingAlbums', { current: albums.length, total: allAlbums.length }) }}
           </p>
         </div>
-        <!-- Detailed Copyright Notice -->
-        <CopyrightNotice />
-      </div>
-    </main>
-
-    <!-- Fullscreen Lightbox -->
-    <Transition name="lightbox-fade">
-      <div v-if="lightboxOpen" class="lightbox-overlay" @click="closeLightbox">
-        <button class="lightbox-close" aria-label="Close" @click="closeLightbox">
-          <svg viewBox="0 0 24 24" class="close-icon">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        <button
-          v-if="currentImageIndex > 0"
-          class="lightbox-nav lightbox-prev"
-          aria-label="Previous"
-          @click.stop="prevImage"
-        >
-          <svg viewBox="0 0 24 24" class="nav-arrow">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
-
-        <div class="lightbox-content" @click.stop>
-          <img
-            :src="lightboxImages[currentImageIndex]?.image"
-            :alt="lightboxImages[currentImageIndex]?.title || 'Photo'"
-            class="lightbox-image"
-          />
-          <div v-if="lightboxImages[currentImageIndex]?.title" class="lightbox-info">
-            <h3 class="lightbox-title">{{ lightboxImages[currentImageIndex].title }}</h3>
-            <p v-if="lightboxImages[currentImageIndex]?.description" class="lightbox-description">
-              {{ lightboxImages[currentImageIndex].description }}
-            </p>
-          </div>
-        </div>
-
-        <button
-          v-if="currentImageIndex < lightboxImages.length - 1"
-          class="lightbox-nav lightbox-next"
-          aria-label="Next"
-          @click.stop="nextImage"
-        >
-          <svg viewBox="0 0 24 24" class="nav-arrow">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </button>
-
         <div class="lightbox-counter">
           {{ currentImageIndex + 1 }} / {{ lightboxImages.length }}
+        </div>
         </div>
       </div>
     </Transition>
@@ -101,10 +90,12 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n, useHead } from '#imports'
+import type { Album, AlbumPhoto, ProcessedPhoto, Photo } from '../types'
 
   // SEO: Page-specific meta tags for photography portfolio (localized)
-  const { t } = useI18n();
+  const { t } = useI18n()
 
   useHead({
     title: t('index.title'),
@@ -150,6 +141,23 @@
   const posts = ref<ProcessedPhoto[]>([])
   const loading = ref(true)
   const visibleAlbumsCount = ref(5)
+
+  // Hero images for landing
+  const heroImages = ref([
+    { src: '/foto-sito/alice_alice-portrait-elegance_1_1766139336530.jpg', alt: 'Portrait Elegance' },
+    { src: '/foto-sito/alice_alice-portrait-elegance_2_1766139336726.jpg', alt: 'Portrait Elegance' },
+    { src: '/foto-sito/alice_alice-portrait-elegance_3_1766139337054.jpg', alt: 'Portrait Elegance' },
+    { src: '/foto-sito/alice_alice-portrait-elegance_4_1766139337197.jpg', alt: 'Portrait Elegance' },
+    { src: '/foto-sito/alice_alice-portrait-elegance_5_1766139337340.jpg', alt: 'Portrait Elegance' },
+    { src: '/foto-sito/alice_alice-natural-light_1_1766139337450.jpg', alt: 'Natural Light' },
+    { src: '/foto-sito/alice_alice-natural-light_2_1766139337651.jpg', alt: 'Natural Light' },
+    { src: '/foto-sito/alice_alice-natural-light_3_1766139337800.jpg', alt: 'Natural Light' },
+    { src: '/foto-sito/alice_alice-natural-light_4_1766139338080.jpg', alt: 'Natural Light' },
+    { src: '/foto-sito/alice_alice-natural-light_5_1766139338221.jpg', alt: 'Natural Light' },
+  ])
+
+  const randomHeroImageIndex = ref(0)
+  const randomHeroImage = computed(() => heroImages.value[randomHeroImageIndex.value])
 
   // Group photos by album (session_slug)
   const allAlbums = computed((): Album[] => {
@@ -219,7 +227,8 @@
   // Close lightbox
   const closeLightbox = (): void => {
     lightboxOpen.value = false
-    document.body.style.overflow = ''
+    // Keep scroll locked if landing isn't finished yet
+    if (landingDone.value) document.body.style.overflow = ''
   }
 
   // Navigate lightbox
@@ -237,6 +246,15 @@
 
   // Keyboard navigation
   const handleKeydown = (e: KeyboardEvent): void => {
+    // Allow keyboard dismissal of landing
+    if (!landingDone.value && !lightboxOpen.value) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault()
+        finishLanding()
+        return
+      }
+    }
+
     if (!lightboxOpen.value) return
 
     if (e.key === 'Escape') closeLightbox()
@@ -244,10 +262,166 @@
     else if (e.key === 'ArrowLeft') prevImage()
   }
 
+  // Landing scroll gating: block page scroll until landing fully slides away
+  const landingDone = ref(false)
+  const landingOffset = ref(0)
+  const landingHeight = ref(0)
+  let touchLastY = 0
+
+  const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value))
+
+  const applyLandingStyles = (): void => {
+    const landingWrapper = document.querySelector('.landing-wrapper') as HTMLElement | null
+    if (!landingWrapper || landingHeight.value <= 0) return
+
+    const progress = landingHeight.value ? landingOffset.value / landingHeight.value : 0
+    const blurAmount = progress > 0.8 ? ((progress - 0.8) / 0.2) * 8 : 0
+
+    landingWrapper.style.transform = `translateY(-${landingOffset.value}px)`
+    landingWrapper.style.filter = `blur(${blurAmount}px)`
+
+    if (landingDone.value) {
+      landingWrapper.style.pointerEvents = 'none'
+      landingWrapper.style.visibility = 'hidden'
+    } else {
+      landingWrapper.style.pointerEvents = 'auto'
+      landingWrapper.style.visibility = 'visible'
+    }
+  }
+
+  const lockPageScroll = (): void => {
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+  }
+
+  const unlockPageScroll = (): void => {
+    document.documentElement.style.overflow = ''
+    if (!lightboxOpen.value) document.body.style.overflow = ''
+    document.body.style.touchAction = ''
+  }
+
+  const finishLanding = (): void => {
+    landingDone.value = true
+    landingOffset.value = landingHeight.value
+    applyLandingStyles()
+    unlockPageScroll()
+  }
+
+  // Allow re-triggering the landing slide when scrolling back to top
+  const resetLandingIfAtTop = (): void => {
+    if (lightboxOpen.value) return
+    if (window.scrollY <= 4 && landingDone.value) {
+      landingDone.value = false
+      landingOffset.value = 0
+      applyLandingStyles()
+      lockPageScroll()
+    }
+  }
+
+  // =========================
+  // Kinfolk-like caption parallax
+  // =========================
+  let photoSectionEl: HTMLElement | null = null
+  let captionEl: HTMLElement | null = null
+  let photoTop = 0
+  let photoHeight = 0
+  let captionTicking = false
+
+  const recalcPhotoMetrics = (): void => {
+    if (!photoSectionEl) return
+    // offsetTop is stable for our static layout
+    photoTop = photoSectionEl.offsetTop
+    photoHeight = photoSectionEl.offsetHeight
+  }
+
+  const updateCaptionOnScroll = (): void => {
+    if (!photoSectionEl || !captionEl) return
+    if (captionTicking) return
+    captionTicking = true
+
+    requestAnimationFrame(() => {
+      const y = window.scrollY
+      // Map when the section is traversed to [0..1]
+      const progress = clamp((y - photoTop) / (photoHeight || 1), 0, 1)
+      // Subtle vertical drift and gentle opacity shaping
+      const translateY = (1 - progress) * 40 - 20 // from ~+20px to ~-20px
+      const opacity = clamp(0.9 - Math.abs(progress - 0.5) * 0.4, 0.6, 1)
+
+      captionEl!.style.transform = `translateY(${translateY}px)`
+      captionEl!.style.opacity = String(opacity)
+      captionTicking = false
+    })
+  }
+
+  const onWheel = (event: WheelEvent): void => {
+    if (landingDone.value || lightboxOpen.value) return
+    event.preventDefault()
+
+    // Apply a gentle easing factor to reduce jumpiness
+    const delta = event.deltaY * 0.65
+    landingOffset.value = clamp(landingOffset.value + delta, 0, landingHeight.value)
+    applyLandingStyles()
+
+    if (landingOffset.value >= landingHeight.value - 12) finishLanding()
+  }
+
+  const onTouchStart = (event: TouchEvent): void => {
+    if (landingDone.value || lightboxOpen.value) return
+    const touch = event.touches.item(0)
+    if (!touch) return
+    touchLastY = touch.clientY
+  }
+
+  const onTouchMove = (event: TouchEvent): void => {
+    if (landingDone.value || lightboxOpen.value) return
+    const touch = event.touches.item(0)
+    if (!touch) return
+    event.preventDefault()
+
+    const currentY = touch.clientY
+    const deltaY = (touchLastY - currentY) * 0.65
+    touchLastY = currentY
+
+    landingOffset.value = clamp(landingOffset.value + deltaY, 0, landingHeight.value)
+    applyLandingStyles()
+
+    if (landingOffset.value >= landingHeight.value - 12) finishLanding()
+  }
+
   // SEO: Fetch and display published photos on mount
   onMounted(async () => {
+    // Set random hero image for landing
+    randomHeroImageIndex.value = Math.floor(Math.random() * heroImages.value.length)
+
+    // Measure landing height and lock scroll until landing is dismissed
+    const landingWrapper = document.querySelector('.landing-wrapper') as HTMLElement | null
+    if (landingWrapper) {
+      landingHeight.value = landingWrapper.getBoundingClientRect().height
+      landingOffset.value = 0
+      landingDone.value = false
+      applyLandingStyles()
+      lockPageScroll()
+
+      window.addEventListener('wheel', onWheel, { passive: false })
+      window.addEventListener('touchstart', onTouchStart, { passive: true })
+      window.addEventListener('touchmove', onTouchMove, { passive: false })
+
+    }
+
+    // Caption parallax: cache refs and prime metrics
+    photoSectionEl = document.querySelector('.photo-section') as HTMLElement | null
+    captionEl = document.querySelector('.kinfolk-caption') as HTMLElement | null
+    recalcPhotoMetrics()
+    updateCaptionOnScroll()
+    window.addEventListener('resize', recalcPhotoMetrics, { passive: true })
+    window.addEventListener('scroll', updateCaptionOnScroll, { passive: true })
+    window.addEventListener('scroll', resetLandingIfAtTop, { passive: true })
+
     // Add keyboard event listener
     window.addEventListener('keydown', handleKeydown)
+
+    // (Scroll is gated via wheel/touch until landing finishes)
 
     // Track page visit for analytics
     try {
@@ -262,9 +436,7 @@
     }
 
     try {
-      console.log('[Index] Fetching photos...')
       const response = await $fetch<{ success: boolean; data?: Photo[]; photos?: Photo[] }>('/api/photos?published=true')
-      console.log('[Index] API Response:', response)
       
       if (response.success && (Array.isArray(response.data) || Array.isArray(response.photos))) {
         const photoArray = Array.isArray(response.data) ? response.data : response.photos || []
@@ -278,24 +450,28 @@
             tags: Array.isArray(photo.tags) ? photo.tags : (photo.tags ? String(photo.tags).split(',') : ['Photography'])
           }
         })
-        
-        console.log('[Index] Mapped posts:', posts.value.length)
-        console.log('[Index] Albums:', allAlbums.value.length)
-      } else {
-        console.warn('[Index] Invalid response:', response)
       }
     } catch (error) {
-      console.error('[Index] Failed to load photos:', error)
+      // Silently handle fetch errors
     } finally {
       loading.value = false
     }
   })
 
   // Cleanup on unmount
+  // Cleanup on unmount
   onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown);
-    document.body.style.overflow = '';
-  });
+    window.removeEventListener('keydown', handleKeydown)
+    window.removeEventListener('wheel', onWheel as EventListener)
+    window.removeEventListener('touchstart', onTouchStart as EventListener)
+    window.removeEventListener('touchmove', onTouchMove as EventListener)
+    unlockPageScroll()
+    if (!lightboxOpen.value) document.body.style.overflow = ''
+
+    window.removeEventListener('resize', recalcPhotoMetrics as EventListener)
+    window.removeEventListener('scroll', updateCaptionOnScroll as EventListener)
+    window.removeEventListener('scroll', resetLandingIfAtTop as EventListener)
+  })
 </script>
 
 <style scoped>
@@ -317,41 +493,331 @@
     overflow-x: hidden;
     background-color: var(--bg-primary);
     color: var(--text-primary);
-    padding: clamp(12px, 3vw, 24px); /* Responsive padding for mobile-first approach */
-    font-family: var(--font-body); /* Roboto body font for clean readability */
+    font-family: var(--font-body);
     transition: background-color 0.3s ease, color 0.3s ease;
+    scroll-snap-type: y proximity;
   }
 
-  /* Animated background gradients */
-  .animated-background {
+  /* While landing is active, hide main content but keep the photo section visible beneath */
+  .page-container.landing-active .main-content {
+    visibility: hidden;
+  }
+
+  .page-container.landing-active .landing-wrapper {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* ============================================
+   PHOTO SECTION - First visible content
+   ============================================ */
+
+  .photo-section {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg-primary);
+    scroll-snap-align: start;
+  }
+
+  .section-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  /* ============================================
+   KINFOLK CAPTION OVERLAY
+   ============================================ */
+
+  .kinfolk-caption {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    will-change: transform, opacity;
+    transform: translateY(20px);
+    opacity: 0.95;
+  }
+
+  .kinfolk-caption-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+    padding: 0 1rem;
+    max-width: min(90vw, 1000px);
+  }
+
+  .kinfolk-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: clamp(0.8rem, 1.6vw, 1rem);
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+
+  .kinfolk-headline {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.04;
+    font-size: clamp(2.5rem, 6.5vw, 5.25rem);
+    color: #ffffff;
+    -webkit-text-stroke: 0.35px rgba(0,0,0,0.35);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.65), 0 3px 28px rgba(0,0,0,0.5);
+    position: relative;
+    filter: contrast(1.1);
+  }
+
+  /* Grain overlay effect for kinfolk headline */
+  .kinfolk-headline::before {
+    content: '';
+    position: absolute;
+    inset: -10%;
+    background-image: 
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='5' result='noise' /%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    background-size: 100px 100px;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  /* ============================================
+   LANDING WRAPPER - 100vh fixed overlay that slides on top
+   ============================================ */
+
+  .landing-wrapper {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    z-index: -1;
-    background: 
-      radial-gradient(ellipse at 20% 30%, rgba(100, 100, 100, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 70%, rgba(120, 120, 120, 0.12) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(90, 90, 90, 0.1) 0%, transparent 50%),
-      linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-    background-size: 200% 200%, 250% 250%, 300% 300%, 100% 100%;
-    animation: gradientFlow 25s ease infinite;
+    height: 100vh;
+    background: var(--bg-primary);
+    z-index: 100; /* Above everything */
+    will-change: transform, filter;
+    overflow: hidden;
+    
+    /* Scroll effect applied via JS */
+    transform: translateY(0);
+    filter: blur(0px);
+    transition: none;
+    scroll-snap-align: start;
   }
 
-  @keyframes gradientFlow {
-    0%, 100% {
-      background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%;
+  /* ============================================
+   LANDING SECTION - KINFOLK INSPIRED WITH PARALLAX
+   ============================================ */
+
+  .landing-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    padding: 4rem 2rem;
+  }
+
+  .landing-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    max-width: 900px;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+  }
+
+  .landing-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .landing-title {
+    font-family: var(--font-heading);
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .landing-subtitle {
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .landing-description {
+    font-family: var(--font-body);
+    font-size: clamp(1.125rem, 2.2vw, 1.75rem);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 700px;
+  }
+
+  .landing-photo {
+    width: 100%;
+    max-width: 500px;
+    height: 60vh;
+    max-height: 700px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 2px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  }
+
+  .landing-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  /* Mobile Responsive - Vertical Layout */
+  @media (max-width: 768px) {
+    .landing-grid {
+      gap: 2rem;
+      max-width: 100%;
+      padding: 0;
     }
-    25% {
-      background-position: 50% 30%, 80% 70%, 70% 40%, 0% 0%;
+
+    .landing-title {
+      font-size: clamp(2.5rem, 10vw, 4rem);
+    }
+
+    .landing-subtitle {
+      font-size: clamp(0.875rem, 3vw, 1.125rem);
+    }
+
+    .landing-description {
+      font-size: clamp(1rem, 4vw, 1.25rem);
+      max-width: 90%;
+    }
+
+    .landing-photo {
+      max-width: 90%;
+      height: 50vh;
+      max-height: 500px;
+    }
+  }
+
+  /* Tablet - Adjust spacing */
+  @media (max-width: 1024px) {
+    .landing-grid {
+      gap: 2.5rem;
+      max-width: 700px;
+    }
+
+    .landing-photo {
+      max-width: 400px;
+      height: 55vh;
+    }
+  }
+
+  /* Scroll Indicator */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    animation: bounce 2s infinite;
+  }
+
+  .continue-btn {
+    position: absolute;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.85rem 1.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--text-secondary);
+    background: rgba(0,0,0,0.35);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(6px);
+  }
+
+  .continue-btn:hover {
+    background: rgba(0,0,0,0.55);
+    transform: translateX(-50%) translateY(-1px);
+  }
+
+  .continue-btn:active {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .scroll-arrow {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateX(-50%) translateY(0);
+      opacity: 0.6;
     }
     50% {
-      background-position: 100% 50%, 20% 30%, 30% 70%, 0% 0%;
+      transform: translateX(-50%) translateY(8px);
+      opacity: 0.3;
     }
-    75% {
-      background-position: 30% 80%, 70% 20%, 80% 30%, 0% 0%;
-    }
+  }
+
+  /* ============================================
+   MAIN CONTENT SECTION
+   ============================================ */
+
+  .main-content {
+    position: relative;
+    width: 100%;
+    max-width: 80rem; /* 1280px - align with header/nav width */
+    margin: 0 auto;
+    padding: clamp(32px, 6vw, 64px) clamp(16px, 3vw, 32px) clamp(56px, 8vw, 96px);
+    background: var(--bg-primary);
+    z-index: 1;
+    min-height: 100vh;
+    scroll-snap-align: start;
   }
 
   /* Heading typography - uses Oswald for editorial impact */
@@ -397,19 +863,21 @@
     gap: 10px;
     padding: 14px 28px;
     background: var(--bg-primary);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     border-radius: 12px;
     color: var(--text-primary);
     font-size: 0.95rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.08));
+    box-shadow: 0 2px 8px var(--shadow-color);
   }
 
   .action-btn:hover {
     background: var(--bg-secondary);
-    box-shadow: 0 4px 12px var(--shadow-color, rgba(0, 0, 0, 0.12));
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    box-shadow: 0 4px 16px var(--shadow-color);
     transform: translateY(-2px);
   }
 
@@ -438,16 +906,17 @@
   }
 
   .load-more-albums {
-    background: var(--text-primary);
-    color: var(--bg-primary);
-    border-color: var(--text-primary);
+    background: var(--accent-primary);
+    color: #ffffff;
+    border-color: var(--accent-primary);
     padding: 16px 40px;
     font-size: 1.05rem;
+    font-weight: 600;
   }
 
   .load-more-albums:hover {
-    opacity: 0.9;
-    background: var(--text-primary);
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
   }
 
   .albums-count-text {
@@ -663,8 +1132,8 @@
   /* Hero introduction block - sets context for page content */
   .intro {
     max-width: 56rem; /* 896px - optimal line length for readability */
-    padding: clamp(32px, 6vw, 48px) 0; /* Increased padding for more space */
-    margin-bottom: clamp(64px, 12vw, 112px); /* Increased margin for more separation */
+    padding: clamp(40px, 8vw, 56px) 0; /* Increased padding for breathing room */
+    margin-bottom: clamp(80px, 15vw, 120px); /* Increased separation */
     text-align: center; /* Center-align all intro text */
     margin-left: auto;
     margin-right: auto;
@@ -673,9 +1142,10 @@
   /* Eyebrow text - category or context label above headline */
   .eyebrow {
     text-transform: uppercase; /* All caps for label aesthetic */
-    letter-spacing: 0.08em; /* Wide tracking for elegance */
+    letter-spacing: 0.12em; /* Wider tracking for elegance */
     font-size: 0.875rem; /* 14px - subtle size */
-    color: var(--text-muted);
+    color: var(--accent-primary);
+    font-weight: 600;
     transition: color 0.3s ease;
     text-align: center; /* Explicitly center */
   }
@@ -683,20 +1153,14 @@
   /* Main headline - primary H1 for SEO and visual hierarchy */
   .headline {
     margin: 0.75rem 0; /* Vertical rhythm */
-    font-size: 2.25rem; /* 36px base - mobile-first */
-    font-weight: 400; /* Regular weight for Oswald elegance */
+    font-size: clamp(2rem, 6vw, 3.25rem);
+    font-weight: 500; /* Slightly stronger presence */
+    letter-spacing: 0.04em;
+    line-height: 1.1;
     color: var(--text-primary);
     transition: color 0.3s ease;
   }
 
-  /* Tablet and desktop headline scaling */
-  @media (min-width: 768px) {
-    .headline {
-      font-size: 3.25rem; /* Slightly larger for better presence */
-    }
-  }
-
-  /* Lead paragraph - introductory copy below headline */
   .lede {
     font-size: 1rem; /* 16px base */
     line-height: 1.6; /* Generous line height for readability */
@@ -741,16 +1205,7 @@
     }
   }
 
-  /* Mobile spacing adjustment */
-  @media (max-width: 768px) {
-    .blog-list {
-      gap: 3rem; /* 48px - compact spacing for mobile */
-    }
-  }
-
-  /* ============================================
-   POST CARD - INDIVIDUAL PHOTO ARTICLE
-   ============================================ */
+  /* ============================================ */
 
   /* Single post container - semantic article element */
   .post {
@@ -871,15 +1326,21 @@
   /* Individual tag pill - bordered rounded style */
   .tag {
     display: inline-block;
-    padding: 0.25rem 0.75rem; /* 4px vertical, 12px horizontal */
+    padding: 0.35rem 0.85rem; /* Slightly more padding */
     font-size: 0.75rem; /* 12px - small label text */
     font-weight: 600; /* Semi-bold for emphasis */
-    letter-spacing: 0.05em; /* Slight tracking */
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
+    letter-spacing: 0.06em; /* Slightly more tracking */
+    background-color: transparent;
+    color: var(--accent-primary);
     border-radius: 9999px; /* Fully rounded pill shape */
-    border: 1px solid var(--border-color);
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    border: 1.5px solid var(--accent-primary);
+    transition: all 0.3s ease;
+  }
+
+  .tag:hover {
+    background-color: var(--accent-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
   }
 
   /* ============================================

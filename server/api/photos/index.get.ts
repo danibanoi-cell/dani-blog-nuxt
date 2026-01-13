@@ -11,7 +11,6 @@ export default defineEventHandler(async (event): Promise<ApiResponse<Photo[]>> =
     const sessionColArray = Array.isArray(sessionColResult) ? sessionColResult : []
     
     if (sessionColArray.length === 0) {
-      console.log('[Photos API] Adding session_slug column...')
       await query(`ALTER TABLE photos ADD COLUMN session_slug VARCHAR(255) NULL, ADD INDEX idx_session (session_slug)`)
     }
 
@@ -19,15 +18,13 @@ export default defineEventHandler(async (event): Promise<ApiResponse<Photo[]>> =
     const locColArray = Array.isArray(locColResult) ? locColResult : []
     
     if (locColArray.length === 0) {
-      console.log('[Photos API] Adding location column...')
-      await query(`ALTER TABLE photos ADD COLUMN location VARCHAR(255) DEFAULT 'Studio'`)
+      await query("ALTER TABLE photos ADD COLUMN location VARCHAR(255) DEFAULT 'Studio'")
     }
 
     const dateColResult = await query("SHOW COLUMNS FROM photos LIKE 'date_taken'")
     const dateColArray = Array.isArray(dateColResult) ? dateColResult : []
     
     if (dateColArray.length === 0) {
-      console.log('[Photos API] Adding date_taken column...')
       await query(`ALTER TABLE photos ADD COLUMN date_taken VARCHAR(100) DEFAULT '2025'`)
     }
 
@@ -75,7 +72,6 @@ export default defineEventHandler(async (event): Promise<ApiResponse<Photo[]>> =
       params.push(parseInt(String(queryParams.limit)))
     }
 
-    console.log('[Photos API] Executing query...')
     const result = await query(sql, params)
     
     // Safely extract photos array
@@ -97,8 +93,6 @@ export default defineEventHandler(async (event): Promise<ApiResponse<Photo[]>> =
       updated_at: photo.updated_at,
       tags: photo.tags ? photo.tags.split(',').filter((t: string) => t.trim()) : []
     }))
-
-    console.log(`[Photos API] Found ${processedPhotos.length} photos`)
 
     return {
       success: true,

@@ -1,70 +1,182 @@
 <template>
-  <div class="dashboard-shell text-white">
+  <div class="dashboard-shell">
     <div class="bg-layer" aria-hidden="true"></div>
-    <div class="glow-layer" aria-hidden="true"></div>
     <div class="content-shell">
       <!-- Header -->
       <header class="header-bar">
-        <div class="flex items-center justify-between">
-          <h1 class="font-display text-3xl">Dashboard</h1>
-          <button
-            class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-sm border border-white/20"
-            @click="handleLogout"
-          >
-            Logout
-          </button>
+        <div class="header-content">
+          <h1 class="header-title">Dashboard</h1>
+          <button class="logout-btn" @click="handleLogout">Logout</button>
         </div>
       </header>
 
       <!-- Main Content -->
-      <main class="max-w-7xl mx-auto px-6 py-8 space-y-6">
+      <main class="main-content">
         <div class="tab-switch">
+          <button
+            :class="['tab-btn', activeTab === 'landing' ? 'tab-active' : '']"
+            @click="activeTab = 'landing'"
+          >
+            🏠 Landing Page
+          </button>
+          <button
+            :class="['tab-btn', activeTab === 'section' ? 'tab-active' : '']"
+            @click="activeTab = 'section'"
+          >
+            📷 Section Photo
+          </button>
           <button
             :class="['tab-btn', activeTab === 'upload' ? 'tab-active' : '']"
             @click="activeTab = 'upload'"
           >
-            Upload New Photo
+            ⬆️ Upload Album
           </button>
           <button
             :class="['tab-btn', activeTab === 'existing' ? 'tab-active' : '']"
             @click="activeTab = 'existing'"
           >
-            Existing Photos
+            🖼️ Photos
           </button>
           <button
             :class="['tab-btn', activeTab === 'stats' ? 'tab-active' : '']"
             @click="activeTab = 'stats'"
           >
-            Statistiche
+            📊 Stats
           </button>
         </div>
 
         <Transition name="fade-slide" mode="out-in">
-          <div v-if="activeTab === 'home'" key="home" class="panel text-center py-10">
-            <h2 class="text-2xl font-semibold mb-2">Benvenuto</h2>
-            <p class="text-gray-300">Seleziona una sezione sopra per iniziare.</p>
+          <!-- LANDING PAGE SETTINGS -->
+          <div v-if="activeTab === 'landing'" key="landing" class="panel">
+            <h2 class="panel-title">Landing Page Settings</h2>
+            <p class="panel-desc">Configure the landing page hero photo and text content.</p>
+
+            <div class="section-divider"></div>
+
+            <!-- Landing Text Settings -->
+            <div class="form-section">
+              <h3 class="form-section-title">Text Content</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Title</label>
+                  <input
+                    v-model="landingSettings.title"
+                    type="text"
+                    class="input-field"
+                    placeholder="DANI BANOI"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Subtitle</label>
+                  <input
+                    v-model="landingSettings.subtitle"
+                    type="text"
+                    class="input-field"
+                    placeholder="Photographer | Travel & Documentary"
+                  />
+                </div>
+                <div class="form-group full-width">
+                  <label class="form-label">Description</label>
+                  <textarea
+                    v-model="landingSettings.description"
+                    rows="3"
+                    class="input-field"
+                    placeholder="Discover authentic moments captured through refined portraits..."
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Landing Photo Selection -->
+            <div class="form-section">
+              <h3 class="form-section-title">Hero Photos</h3>
+              <p class="form-desc">Select photos for the landing page slideshow. Click to toggle selection.</p>
+              
+              <div v-if="loading" class="loading-state">Loading photos...</div>
+              <div v-else class="photo-selector-grid">
+                <div
+                  v-for="photo in allPhotosFlat"
+                  :key="photo.id"
+                  class="photo-selector-item"
+                  :class="{ selected: landingSettings.heroPhotos.includes(photo.id) }"
+                  @click="toggleLandingPhoto(photo.id)"
+                >
+                  <img :src="photo.filepath" :alt="photo.title" />
+                  <div class="photo-selector-overlay">
+                    <span v-if="landingSettings.heroPhotos.includes(photo.id)" class="check-icon">✓</span>
+                  </div>
+                </div>
+              </div>
+              <p class="selection-count">{{ landingSettings.heroPhotos.length }} photos selected</p>
+            </div>
+
+            <button class="save-btn" @click="saveLandingSettings" :disabled="saving">
+              {{ saving ? 'Saving...' : 'Save Landing Settings' }}
+            </button>
           </div>
+
+          <!-- SECTION PHOTO SELECTION -->
+          <div v-else-if="activeTab === 'section'" key="section" class="panel">
+            <h2 class="panel-title">Section Photo</h2>
+            <p class="panel-desc">Select the main photo displayed in the fullscreen photo section below the landing.</p>
+
+            <div class="section-divider"></div>
+
+            <!-- Current Selection -->
+            <div v-if="sectionPhoto" class="current-section-photo">
+              <h3 class="form-section-title">Current Photo</h3>
+              <div class="current-photo-preview">
+                <img :src="sectionPhoto.filepath" :alt="sectionPhoto.title" />
+                <div class="current-photo-info">
+                  <p class="current-photo-title">{{ sectionPhoto.title }}</p>
+                  <button class="remove-btn" @click="sectionPhotoId = null">Remove</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Photo Selection Grid -->
+            <div class="form-section">
+              <h3 class="form-section-title">Select Photo</h3>
+              
+              <div v-if="loading" class="loading-state">Loading photos...</div>
+              <div v-else class="photo-selector-grid large">
+                <div
+                  v-for="photo in allPhotosFlat"
+                  :key="photo.id"
+                  class="photo-selector-item"
+                  :class="{ selected: sectionPhotoId === photo.id }"
+                  @click="sectionPhotoId = photo.id"
+                >
+                  <img :src="photo.filepath" :alt="photo.title" />
+                  <div class="photo-selector-overlay">
+                    <span v-if="sectionPhotoId === photo.id" class="check-icon">✓</span>
+                  </div>
+                  <div class="photo-title-bar">{{ photo.title }}</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="save-btn" @click="saveSectionPhoto" :disabled="saving">
+              {{ saving ? 'Saving...' : 'Save Section Photo' }}
+            </button>
+          </div>
+
+          <!-- UPLOAD ALBUM -->
           <div v-else-if="activeTab === 'upload'" key="upload" class="panel">
-            <h2 class="text-xl font-semibold mb-4">Create New Album</h2>
+            <h2 class="panel-title">Upload New Album</h2>
+            <p class="panel-desc">Create a new photo album with multiple images.</p>
 
-            <form class="space-y-4" @submit.prevent="handleAlbumUpload">
-              <div
-                v-if="uploadError"
-                class="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded"
-              >
-                {{ uploadError }}
-              </div>
+            <form class="upload-form" @submit.prevent="handleAlbumUpload">
+              <div v-if="uploadError" class="alert alert-error">{{ uploadError }}</div>
+              <div v-if="uploadSuccess" class="alert alert-success">{{ uploadSuccess }}</div>
 
-              <div
-                v-if="uploadSuccess"
-                class="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded"
-              >
-                {{ uploadSuccess }}
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium mb-1">Album Name *</label>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Album Name *</label>
                   <input
                     v-model="newAlbum.name"
                     required
@@ -74,8 +186,8 @@
                   />
                 </div>
 
-                <div>
-                  <label class="block text-sm font-medium mb-1">Description</label>
+                <div class="form-group">
+                  <label class="form-label">Description</label>
                   <textarea
                     v-model="newAlbum.description"
                     rows="3"
@@ -84,8 +196,8 @@
                   ></textarea>
                 </div>
 
-                <div>
-                  <label class="block text-sm font-medium mb-1">Tags (comma separated)</label>
+                <div class="form-group">
+                  <label class="form-label">Tags (comma separated)</label>
                   <input
                     v-model="albumTagsInput"
                     type="text"
@@ -94,215 +206,152 @@
                   />
                 </div>
 
-                <div>
-                  <label class="block text-sm font-medium mb-1">Upload First File (Video or Image) *</label>
+                <div class="form-group">
+                  <label class="form-label">Cover Image *</label>
                   <input
                     ref="albumFileInput"
                     type="file"
                     required
                     accept="video/*,image/*"
-                    class="input-field"
+                    class="input-field file-input"
                   />
                 </div>
 
-                <div>
-                  <label class="block text-sm font-medium mb-1">Upload Additional Photos</label>
+                <div class="form-group full-width">
+                  <label class="form-label">Additional Photos</label>
                   <input
                     ref="additionalFilesInput"
                     type="file"
                     multiple
                     accept="image/*"
-                    class="input-field"
+                    class="input-field file-input"
                   />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                :disabled="uploading"
-                class="w-full md:w-auto px-6 py-3 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed btn-solid"
-              >
-                <span v-if="uploading">Uploading...</span>
-                <span v-else>Upload Album</span>
+              <button type="submit" :disabled="uploading" class="save-btn">
+                {{ uploading ? 'Uploading...' : 'Upload Album' }}
               </button>
             </form>
           </div>
+
+          <!-- EXISTING PHOTOS -->
           <div v-else-if="activeTab === 'existing'" key="existing" class="panel">
-            <h2 class="text-xl font-semibold mb-4">Existing Photos</h2>
+            <h2 class="panel-title">Existing Photos</h2>
 
-            <div v-if="loading" class="text-center py-8 text-gray-400">Loading photos...</div>
+            <div v-if="loading" class="loading-state">Loading photos...</div>
 
-            <div v-else-if="photos.length === 0" class="text-center py-8 text-gray-400">
-              No photos found. Upload your first photo above!
+            <div v-else-if="photos.length === 0" class="empty-state">
+              <p>No photos found. Upload your first album!</p>
             </div>
 
-            <div v-else>
-              <div v-for="album in limitedAlbums" :key="album.slug" class="mb-8">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center gap-3">
-                    <img
-                      v-if="album.cover"
-                      :src="album.cover"
-                      alt="cover"
-                      class="w-10 h-10 object-cover rounded"
-                    />
-                    <h3 class="text-lg font-semibold">{{ album.title }}</h3>
+            <div v-else class="albums-list">
+              <div v-for="album in limitedAlbums" :key="album.slug" class="album-card">
+                <div class="album-header" @click="toggleAlbum(album.slug)">
+                  <div class="album-info">
+                    <img v-if="album.cover" :src="album.cover" alt="cover" class="album-cover" />
+                    <div>
+                      <h3 class="album-title">{{ album.title }}</h3>
+                      <span class="album-count">{{ album.count }} photos</span>
+                    </div>
                   </div>
-                  <div class="flex items-center gap-3">
-                    <span class="text-xs text-gray-400">{{ album.count }} photos</span>
-                    <button
-                      class="px-2 py-1 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded transition"
-                      @click="toggleAlbum(album.slug)"
-                    >
-                      {{ expandedAlbums[album.slug] ? 'Collapse' : 'Expand' }}
-                    </button>
-                  </div>
+                  <span class="expand-icon">{{ expandedAlbums[album.slug] ? '−' : '+' }}</span>
                 </div>
-                <transition name="fade-slide">
-                  <div
-                    v-if="expandedAlbums[album.slug]"
-                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                  >
-                    <div
-                      v-for="photo in album.items"
-                      :key="photo.id"
-                      class="bg-white/5 border border-white/10 rounded-lg overflow-hidden backdrop-blur-sm"
-                    >
-                      <img
-                        :src="photo.filepath"
-                        :alt="photo.title"
-                        class="w-full h-48 object-cover"
-                      />
-                      <div class="p-4">
-                        <h3 class="font-semibold mb-1">{{ photo.title }}</h3>
-                        <p class="text-sm text-gray-400 mb-1">{{ photo.location }}</p>
-                        <p class="text-xs text-gray-400 mb-2">
-                          Uploaded: {{ formatDate(photo.created_at || photo.updated_at) }}
-                        </p>
-                        <div class="flex flex-wrap gap-1 mb-3">
-                          <span
-                            v-for="tag in photo.tags"
-                            :key="tag"
-                            class="text-xs px-2 py-1 bg-white/10 border border-white/20 rounded"
-                          >
-                            {{ tag }}
-                          </span>
+                
+                <Transition name="fade-slide">
+                  <div v-if="expandedAlbums[album.slug]" class="album-photos-grid">
+                    <div v-for="photo in album.items" :key="photo.id" class="photo-card">
+                      <img :src="photo.filepath" :alt="photo.title" class="photo-image" />
+                      <div class="photo-info">
+                        <h4 class="photo-title">{{ photo.title }}</h4>
+                        <p class="photo-meta">{{ formatDate(photo.created_at) }}</p>
+                        <div class="photo-tags">
+                          <span v-for="tag in photo.tags" :key="tag" class="tag">{{ tag }}</span>
                         </div>
-                        <button
-                          class="w-full px-3 py-2 text-sm transition btn-danger"
-                          @click="deletePhoto(photo.id)"
-                        >
-                          Delete
-                        </button>
+                        <button class="delete-btn" @click="deletePhoto(photo.id)">Delete</button>
                       </div>
                     </div>
                   </div>
-                </transition>
+                </Transition>
               </div>
             </div>
           </div>
-          <div v-else-if="activeTab === 'stats'" key="stats" class="panel">
-            <h2 class="text-xl font-semibold mb-4">Statistiche del Sito</h2>
 
-            <div v-if="statsLoading" class="text-center py-8 text-gray-400">
-              Caricamento statistiche...
-            </div>
+          <!-- STATS -->
+          <div v-else-if="activeTab === 'stats'" key="stats" class="panel">
+            <h2 class="panel-title">Site Statistics</h2>
+
+            <div v-if="statsLoading" class="loading-state">Loading statistics...</div>
 
             <div v-else class="stats-grid">
-              <!-- Total Visits Card -->
               <div class="stat-card">
                 <div class="stat-icon">👥</div>
                 <div class="stat-content">
-                  <h3 class="stat-label">Visite Totali</h3>
+                  <h3 class="stat-label">Total Visits</h3>
                   <p class="stat-value">{{ stats.totalVisits || 0 }}</p>
-                  <p class="stat-meta">Ultimo mese</p>
                 </div>
               </div>
 
-              <!-- Unique Visitors Card -->
               <div class="stat-card">
                 <div class="stat-icon">🌍</div>
                 <div class="stat-content">
-                  <h3 class="stat-label">Visitatori Unici</h3>
+                  <h3 class="stat-label">Unique Visitors</h3>
                   <p class="stat-value">{{ stats.uniqueVisitors || 0 }}</p>
-                  <p class="stat-meta">IP distinti</p>
                 </div>
               </div>
 
-              <!-- Page Views Card -->
               <div class="stat-card">
                 <div class="stat-icon">📄</div>
                 <div class="stat-content">
-                  <h3 class="stat-label">Pagine Viste</h3>
+                  <h3 class="stat-label">Page Views</h3>
                   <p class="stat-value">{{ stats.pageViews || 0 }}</p>
-                  <p class="stat-meta">Totale click</p>
                 </div>
               </div>
 
-              <!-- Photos Viewed Card -->
               <div class="stat-card">
                 <div class="stat-icon">📸</div>
                 <div class="stat-content">
-                  <h3 class="stat-label">Foto Visualizzate</h3>
+                  <h3 class="stat-label">Photos Viewed</h3>
                   <p class="stat-value">{{ stats.photosViewed || 0 }}</p>
-                  <p class="stat-meta">Galleria</p>
                 </div>
               </div>
 
-              <!-- Recent Visitors Table -->
+              <!-- Top Pages -->
               <div class="stat-card-wide">
-                <h3 class="stat-section-title">
-                  <span class="stat-icon-inline">🕒</span>
-                  Visitatori Recenti
-                </h3>
-                <div class="visitor-table">
-                  <div
-                    v-if="!stats.recentVisitors || stats.recentVisitors.length === 0"
-                    class="text-center py-4 text-gray-400"
-                  >
-                    Nessun visitatore recente
+                <h3 class="stat-section-title">🔥 Top Pages</h3>
+                <div class="pages-list">
+                  <div v-if="!stats.topPages?.length" class="empty-state small">No data available</div>
+                  <div v-for="(page, idx) in stats.topPages" :key="idx" class="page-item">
+                    <div class="page-info">
+                      <span class="page-rank">{{ displayIndex(idx) }}</span>
+                      <span class="page-url">{{ page.url }}</span>
+                    </div>
+                    <span class="page-count">{{ page.views }} views</span>
                   </div>
-                  <table v-else class="w-full">
+                </div>
+              </div>
+
+              <!-- Recent Visitors -->
+              <div class="stat-card-wide">
+                <h3 class="stat-section-title">🕒 Recent Visitors</h3>
+                <div class="visitor-table-wrapper">
+                  <div v-if="!stats.recentVisitors?.length" class="empty-state small">No recent visitors</div>
+                  <table v-else class="visitor-table">
                     <thead>
                       <tr>
-                        <th class="text-left">IP</th>
-                        <th class="text-left">Pagina</th>
-                        <th class="text-left">Data/Ora</th>
-                        <th class="text-left">Browser</th>
+                        <th>IP</th>
+                        <th>Page</th>
+                        <th>Time</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="(visitor, idx) in stats.recentVisitors.slice(0, 10)" :key="idx">
                         <td>{{ visitor.ip }}</td>
-                        <td class="truncate max-w-[200px]">{{ visitor.page }}</td>
+                        <td class="truncate">{{ visitor.page }}</td>
                         <td>{{ formatDateTime(visitor.timestamp) }}</td>
-                        <td class="truncate max-w-[150px]">{{ visitor.userAgent }}</td>
                       </tr>
                     </tbody>
                   </table>
-                </div>
-              </div>
-
-              <!-- Top Pages Table -->
-              <div class="stat-card-wide">
-                <h3 class="stat-section-title">
-                  <span class="stat-icon-inline">🔥</span>
-                  Pagine Più Visitate
-                </h3>
-                <div class="pages-list">
-                  <div
-                    v-if="!stats.topPages || stats.topPages.length === 0"
-                    class="text-center py-4 text-gray-400"
-                  >
-                    Nessun dato disponibile
-                  </div>
-                  <div v-for="(page, idx) in stats.topPages" v-else :key="idx" class="page-item">
-                    <div class="page-info">
-                      <span class="page-rank">{{ idx + 1 }}</span>
-                      <span class="page-url">{{ page.url }}</span>
-                    </div>
-                    <span class="page-count">{{ page.views }} visite</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -314,855 +363,1011 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue'
+import { navigateTo } from '#app'
 
-  definePageMeta({
-    layout: false,
-  });
+definePageMeta({
+  layout: false,
+})
 
-  const fileInput = ref<HTMLInputElement | null>(null);
-  const tagsInput = ref('');
-  const newPhoto = ref({
-    title: '',
-    location: '',
-    category: '',
-    session_slug: '',
-    date_taken: '',
-    excerpt: '',
-    published: true,
-  });
+// Tab state
+const activeTab = ref<'landing' | 'section' | 'upload' | 'existing' | 'stats'>('landing')
 
-  const newAlbum = ref({
-    name: '',
-    description: '',
-  });
-  const albumTagsInput = ref('');
-  const albumFileInput = ref<HTMLInputElement | null>(null);
-  const additionalFilesInput = ref<HTMLInputElement | null>(null);
+// Data state
+const photos = ref<any[]>([])
+const sessions = ref<any[]>([])
+const loading = ref(true)
+const uploading = ref(false)
+const saving = ref(false)
+const uploadError = ref('')
+const uploadSuccess = ref('')
+const statsLoading = ref(true)
+const stats = ref<any>({
+  totalVisits: 0,
+  uniqueVisitors: 0,
+  pageViews: 0,
+  photosViewed: 0,
+  recentVisitors: [],
+  topPages: [],
+})
 
-  const activeTab = ref<'home' | 'upload' | 'existing' | 'stats'>('existing');
+// Landing page settings
+const landingSettings = ref({
+  title: 'DANI BANOI',
+  subtitle: 'Photographer | Travel & Documentary',
+  description: 'Discover authentic moments captured through refined portraits and editorial imagery.',
+  heroPhotos: [] as number[],
+})
 
-  const photos = ref<any[]>([]);
-  const sessions = ref<any[]>([]);
-  const loading = ref(true);
-  const uploading = ref(false);
-  const uploadError = ref('');
-  const uploadSuccess = ref('');
-  const statsLoading = ref(true);
-  const stats = ref<any>({
-    totalVisits: 0,
-    uniqueVisitors: 0,
-    pageViews: 0,
-    photosViewed: 0,
-    recentVisitors: [],
-    topPages: [],
-  });
+// Section photo
+const sectionPhotoId = ref<number | null>(null)
+const sectionPhoto = computed(() => {
+  if (!sectionPhotoId.value) return null
+  return allPhotosFlat.value.find(p => p.id === sectionPhotoId.value)
+})
 
-  // Track per-album toggle (show all vs random selection)
-  const expandedAlbums = ref<Record<string, boolean>>({});
-  const toggleAlbum = (slug: string) => {
-    expandedAlbums.value[slug] = !expandedAlbums.value[slug];
-  };
+// Album upload
+const newAlbum = ref({ name: '', description: '' })
+const albumTagsInput = ref('')
+const albumFileInput = ref<HTMLInputElement | null>(null)
+const additionalFilesInput = ref<HTMLInputElement | null>(null)
 
-  const formatDate = (value?: string) => {
-    if (!value) return 'N/A';
-    const date = new Date(value);
-    return isNaN(date.getTime())
-      ? 'N/A'
-      : date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
+// Album expansion
+const expandedAlbums = ref<Record<string, boolean>>({})
+const toggleAlbum = (slug: string) => {
+  expandedAlbums.value[slug] = !expandedAlbums.value[slug]
+}
 
-  const formatDateTime = (value?: string) => {
-    if (!value) return 'N/A';
-    const date = new Date(value);
-    return isNaN(date.getTime())
-      ? 'N/A'
-      : date.toLocaleDateString('it-IT', {
-          day: '2-digit',
-          month: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-  };
+const displayIndex = (idx: number | string): number => Number(idx) + 1
 
-  // Normalize filepaths from DB to web-accessible paths
-  const normalizeFilepath = (path: string) => {
-    if (!path) return '';
-    // If it's already a web path, return as is
-    if (path.startsWith('/foto-sito/') || path.startsWith('/uploads/')) {
-      return path;
-    }
-    // Extract filename from full filesystem path
-    const filename = path.split('/').pop();
-    return `/foto-sito/${filename}`;
-  };
-
-  // Map session_slug to metadata (title, cover, count)
-  const sessionMeta = computed(() => {
-    const map: Record<string, { title: string; filepath: string; photo_count: number }> = {};
-    for (const s of sessions.value) {
-      if (!s.session_slug) continue;
-      map[s.session_slug] = {
-        title: s.title || s.session_slug,
-        filepath: s.filepath,
-        photo_count: s.photo_count || 0,
-      };
-    }
-    return map;
-  });
-
-  // Group photos by album (session_slug) with display metadata
-  const groupedAlbums = computed(() => {
-    const groups: Record<string, any[]> = {};
-    for (const p of photos.value) {
-      const key = p.session_slug || 'Senza album';
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(p);
-    }
-    return Object.entries(groups).map(([slug, items]) => {
-      const meta = sessionMeta.value[slug];
-      const title = meta?.title || slug;
-      const cover = meta?.filepath || items[0]?.filepath;
-      const count = meta?.photo_count || items.length;
-      // Ensure items are sorted by latest upload within the album
-      const sortedItems = [...items].sort((a: any, b: any) => {
-        const ad = new Date(a.created_at as string).getTime();
-        const bd = new Date(b.created_at as string).getTime();
-        return bd - ad;
-      });
-      return { slug, title, cover, count, items: sortedItems };
-    });
-  });
-
-  // Utility: pick N random unique items from an array
-  function randomSample<T>(arr: T[], n: number): T[] {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a.slice(0, Math.min(n, a.length));
+// Toggle landing photo selection
+const toggleLandingPhoto = (id: number) => {
+  const idx = landingSettings.value.heroPhotos.indexOf(id)
+  if (idx === -1) {
+    landingSettings.value.heroPhotos.push(id)
+  } else {
+    landingSettings.value.heroPhotos.splice(idx, 1)
   }
+}
 
-  // Limit to 8 albums and choose 3–10 recent photos for each
-  const limitedAlbums = computed(() => {
-    // Preserve backend order (sessions are sorted by latest created)
-    const orderMap: Record<string, number> = {};
-    sessions.value.forEach((s: any, idx: number) => {
-      if (s.session_slug) orderMap[s.session_slug] = idx;
-    });
+// Flat list of all photos for selection grids
+const allPhotosFlat = computed(() => {
+  return photos.value.slice(0, 50) // Limit for performance
+})
 
-    const sorted = [...groupedAlbums.value].sort((a, b) => {
-      const ai = orderMap[a.slug] ?? Number.MAX_SAFE_INTEGER;
-      const bi = orderMap[b.slug] ?? Number.MAX_SAFE_INTEGER;
-      return ai - bi;
-    });
+// Normalize filepaths
+const normalizeFilepath = (path: string) => {
+  if (!path) return ''
+  if (path.startsWith('/foto-sito/') || path.startsWith('/uploads/')) return path
+  const filename = path.split('/').pop()
+  return `/foto-sito/${filename}`
+}
 
-    return sorted.slice(0, 8).map((album) => {
-      const min = 3;
-      const max = 10;
-      const count = Math.floor(Math.random() * (max - min + 1)) + min;
-      // Take the most recent items (items are already sorted desc by created_at)
-      const recentItems = album.items.slice(0, count);
-      return { ...album, recentItems };
-    });
-  });
+// Session metadata
+const sessionMeta = computed(() => {
+  const map: Record<string, { title: string; filepath: string; photo_count: number }> = {}
+  for (const s of sessions.value) {
+    if (!s.session_slug) continue
+    map[s.session_slug] = {
+      title: s.title || s.session_slug,
+      filepath: s.filepath,
+      photo_count: s.photo_count || 0,
+    }
+  }
+  return map
+})
 
-  // Check authentication
-  onMounted(async () => {
-    const token = localStorage.getItem('authToken');
+// Grouped albums
+const groupedAlbums = computed(() => {
+  const groups: Record<string, any[]> = {}
+  for (const p of photos.value) {
+    const key = p.session_slug || 'Uncategorized'
+    if (!groups[key]) groups[key] = []
+    groups[key].push(p)
+  }
+  return Object.entries(groups).map(([slug, items]) => {
+    const meta = sessionMeta.value[slug]
+    const title = meta?.title || slug
+    const cover = meta?.filepath || items[0]?.filepath
+    const count = meta?.photo_count || items.length
+    const sortedItems = [...items].sort((a, b) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+    return { slug, title, cover, count, items: sortedItems }
+  })
+})
+
+// Limited albums for display
+const limitedAlbums = computed(() => {
+  const orderMap: Record<string, number> = {}
+  sessions.value.forEach((s: any, idx: number) => {
+    if (s.session_slug) orderMap[s.session_slug] = idx
+  })
+  const sorted = [...groupedAlbums.value].sort((a, b) => {
+    const ai = orderMap[a.slug] ?? Number.MAX_SAFE_INTEGER
+    const bi = orderMap[b.slug] ?? Number.MAX_SAFE_INTEGER
+    return ai - bi
+  })
+  return sorted.slice(0, 12)
+})
+
+// Date formatting
+const formatDate = (value?: string) => {
+  if (!value) return 'N/A'
+  const date = new Date(value)
+  return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+const formatDateTime = (value?: string) => {
+  if (!value) return 'N/A'
+  const date = new Date(value)
+  return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+// API calls
+const fetchPhotos = async () => {
+  loading.value = true
+  try {
+    const response = await $fetch('/api/photos?published=false')
+    photos.value = (response.photos || []).map((p: any) => ({ ...p, filepath: normalizeFilepath(p.filepath) }))
+  } catch (error) {
+    console.error('Failed to fetch photos:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchSessions = async () => {
+  try {
+    const response = await $fetch('/api/sessions')
+    sessions.value = response.sessions || []
+  } catch (error) {
+    console.error('Failed to fetch sessions:', error)
+  }
+}
+
+const fetchStats = async () => {
+  statsLoading.value = true
+  try {
+    const token = localStorage.getItem('authToken')
+    if (!token) return
+    const response = await $fetch('/api/analytics/stats', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (response.success) stats.value = response.stats
+  } catch (error) {
+    console.error('Failed to fetch stats:', error)
+  } finally {
+    statsLoading.value = false
+  }
+}
+
+const saveLandingSettings = async () => {
+  saving.value = true
+  // TODO: Implement API to save landing settings
+  // For now, just simulate save
+  await new Promise(r => setTimeout(r, 500))
+  saving.value = false
+  alert('Landing settings saved! (Note: Backend API not yet implemented)')
+}
+
+const saveSectionPhoto = async () => {
+  saving.value = true
+  // TODO: Implement API to save section photo
+  await new Promise(r => setTimeout(r, 500))
+  saving.value = false
+  alert('Section photo saved! (Note: Backend API not yet implemented)')
+}
+
+const handleAlbumUpload = async () => {
+  uploading.value = true
+  uploadError.value = ''
+  uploadSuccess.value = ''
+
+  try {
+    const token = localStorage.getItem('authToken')
     if (!token) {
-      navigateTo('/admin/login');
-      return;
+      navigateTo('/admin/login')
+      return
     }
 
-    await fetchPhotos();
-    await fetchSessions();
-    await fetchStats();
-  });
+    const first = albumFileInput.value?.files?.[0]
+    if (!first) throw new Error('Cover image is required')
 
-  const fetchStats = async () => {
-    statsLoading.value = true;
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) return;
+    const formData = new FormData()
+    formData.append('name', newAlbum.value.name)
+    formData.append('description', newAlbum.value.description)
+    formData.append('tags', albumTagsInput.value || '')
+    formData.append('firstFile', first)
 
-      const response = await $fetch('/api/analytics/stats', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.success) {
-        stats.value = response.stats;
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    } finally {
-      statsLoading.value = false;
-    }
-  };
-
-  const fetchPhotos = async () => {
-    loading.value = true;
-    try {
-      const response = await $fetch('/api/photos?published=false');
-      // Normalize filepaths so images load correctly in dev even if DB stores filesystem paths
-      photos.value = (response.photos || []).map((p: any) => ({ ...p, filepath: normalizeFilepath(p.filepath) }));
-    } catch (error) {
-      console.error('Failed to fetch photos:', error);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const fetchSessions = async () => {
-    try {
-      const response = await $fetch('/api/sessions');
-      sessions.value = response.sessions || [];
-    } catch (error) {
-      console.error('Failed to fetch sessions:', error);
-    }
-  };
-
-  const handleUpload = async () => {
-    uploadError.value = '';
-    uploadSuccess.value = '';
-    uploading.value = true;
-
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        navigateTo('/admin/login');
-        return;
-      }
-
-      // Upload file first
-      const file = fileInput.value?.files?.[0];
-      if (!file) {
-        throw new Error('No file selected');
-      }
-
-      const formData = new FormData();
-      formData.append('photo', file);
-
-      const uploadResponse = await $fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      // Create photo record
-      const tags = tagsInput.value
-        .split(',')
-        .map((t: string) => t.trim())
-        .filter(Boolean);
-
-      await $fetch('/api/photos', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: {
-          ...newPhoto.value,
-          filename: uploadResponse.filename,
-          filepath: uploadResponse.filepath,
-          tags,
-        },
-      });
-
-      uploadSuccess.value = 'Photo uploaded successfully!';
-
-      // Reset form
-      newPhoto.value = {
-        title: '',
-        location: '',
-        category: '',
-        session_slug: '',
-        date_taken: '',
-        excerpt: '',
-        published: true,
-      };
-      tagsInput.value = '';
-      if (fileInput.value) fileInput.value.value = '';
-
-      // Refresh photos list
-      await fetchPhotos();
-
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        uploadSuccess.value = '';
-      }, 3000);
-    } catch (error: any) {
-      uploadError.value = error.data?.message || 'Upload failed';
-    } finally {
-      uploading.value = false;
-    }
-  };
-
-  const deletePhoto = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this photo?')) {
-      return;
+    const additional = additionalFilesInput.value?.files
+    if (additional?.length) {
+      Array.from(additional).forEach((file, i) => {
+        formData.append(`additionalFiles[${i}]`, file)
+      })
     }
 
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        navigateTo('/admin/login');
-        return;
-      }
+    const response = await fetch('/api/photos/albums', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
 
-      await $fetch(`/api/photos/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    if (!response.ok) throw new Error(await response.text())
 
-      await fetchPhotos();
-    } catch (error) {
-      alert('Failed to delete photo');
+    uploadSuccess.value = 'Album uploaded successfully!'
+    await fetchPhotos()
+    await fetchSessions()
+
+    newAlbum.value = { name: '', description: '' }
+    albumTagsInput.value = ''
+    if (albumFileInput.value) albumFileInput.value.value = ''
+    if (additionalFilesInput.value) additionalFilesInput.value.value = ''
+
+    setTimeout(() => (uploadSuccess.value = ''), 3000)
+  } catch (error: any) {
+    uploadError.value = error?.message || 'Album upload failed'
+  } finally {
+    uploading.value = false
+  }
+}
+
+const deletePhoto = async (id: number) => {
+  if (!confirm('Delete this photo?')) return
+
+  try {
+    const token = localStorage.getItem('authToken')
+    if (!token) {
+      navigateTo('/admin/login')
+      return
     }
-  };
+    await $fetch(`/api/photos/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    await fetchPhotos()
+  } catch (error) {
+    alert('Failed to delete photo')
+  }
+}
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    navigateTo('/admin/login');
-  };
+const handleLogout = () => {
+  localStorage.removeItem('authToken')
+  navigateTo('/admin/login')
+}
 
-  const handleAlbumUpload = async () => {
-    uploading.value = true;
-    uploadError.value = '';
-    uploadSuccess.value = '';
-
-    try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        navigateTo('/admin/login');
-        return;
-      }
-
-      const first = albumFileInput.value?.files?.[0];
-      if (!first) throw new Error('First file is required');
-
-      const formData = new FormData();
-      formData.append('name', newAlbum.value.name);
-      formData.append('description', newAlbum.value.description);
-      formData.append('tags', albumTagsInput.value || '');
-      formData.append('firstFile', first);
-
-      const additional = additionalFilesInput.value?.files;
-      if (additional && additional.length > 0) {
-        Array.from(additional).forEach((file, index) => {
-          formData.append(`additionalFiles[${index}]`, file);
-        });
-      }
-
-      const response = await fetch('/api/photos/albums', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(`Failed to upload album: ${txt}`);
-      }
-
-      uploadSuccess.value = 'Album uploaded successfully!';
-
-      // Refresh photos and sessions
-      await fetchPhotos();
-      await fetchSessions();
-
-      // Reset form
-      newAlbum.value = { name: '', description: '' };
-      albumTagsInput.value = '';
-      if (albumFileInput.value) albumFileInput.value.value = '';
-      if (additionalFilesInput.value) additionalFilesInput.value.value = '';
-
-      setTimeout(() => (uploadSuccess.value = ''), 3000);
-    } catch (error: any) {
-      uploadError.value = error?.message || 'Album upload failed';
-    } finally {
-      uploading.value = false;
-    }
-  };
+// Mount
+onMounted(async () => {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    navigateTo('/admin/login')
+    return
+  }
+  await fetchPhotos()
+  await fetchSessions()
+  await fetchStats()
+})
 </script>
 
 <style scoped>
-  /* ============================================
-   TYPOGRAPHY - ADMIN DASHBOARD
+/* ============================================
+   DASHBOARD - GRAY THEME
    ============================================ */
 
-  /* Display font for headings - uses global Oswald font */
-  .font-display {
-    font-family: var(--font-heading); /* Oswald for dashboard headings */
+.dashboard-shell {
+  position: relative;
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #e5e5e5;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: 
+    radial-gradient(ellipse at 30% 20%, rgba(60, 60, 60, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(50, 50, 50, 0.12) 0%, transparent 50%),
+    linear-gradient(180deg, #0a0a0a 0%, #141414 50%, #0a0a0a 100%);
+  pointer-events: none;
+}
+
+.content-shell {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.header-bar {
+  background: rgba(20, 20, 20, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.logout-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #e5e5e5;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Main Content */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Tabs */
+.tab-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.tab-btn {
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #a0a0a0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e5e5;
+}
+
+.tab-active {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+/* Panel */
+.panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.panel-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.panel-desc {
+  color: #808080;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 2rem 0;
+}
+
+/* Form Elements */
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5e5e5;
+  margin-bottom: 1rem;
+}
+
+.form-desc {
+  color: #707070;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #a0a0a0;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #e5e5e5;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.input-field::placeholder {
+  color: #505050;
+}
+
+.file-input {
+  padding: 0.5rem;
+}
+
+/* Photo Selector Grid */
+.photo-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.photo-selector-grid.large {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  max-height: 500px;
+}
+
+.photo-selector-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.photo-selector-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-selector-item:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.photo-selector-item.selected {
+  border-color: #22c55e;
+}
+
+.photo-selector-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.photo-selector-item:hover .photo-selector-overlay,
+.photo-selector-item.selected .photo-selector-overlay {
+  opacity: 1;
+}
+
+.check-icon {
+  width: 32px;
+  height: 32px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.photo-title-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  color: white;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selection-count {
+  margin-top: 1rem;
+  color: #808080;
+  font-size: 0.875rem;
+}
+
+/* Current Section Photo */
+.current-section-photo {
+  margin-bottom: 1rem;
+}
+
+.current-photo-preview {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+}
+
+.current-photo-preview img {
+  width: 200px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.current-photo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.current-photo-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #e5e5e5;
+}
+
+/* Buttons */
+.save-btn {
+  margin-top: 2rem;
+  padding: 0.875rem 2rem;
+  background: #ffffff;
+  border: none;
+  border-radius: 8px;
+  color: #0a0a0a;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn:hover {
+  background: #e5e5e5;
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.remove-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.remove-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.delete-btn {
+  width: 100%;
+  padding: 0.5rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 6px;
+  color: #ef4444;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Alerts */
+.alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+/* Loading & Empty States */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #606060;
+}
+
+.empty-state.small {
+  padding: 1.5rem;
+}
+
+/* Albums List */
+.albums-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.album-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.album-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.album-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.album-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.album-cover {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.album-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #e5e5e5;
+}
+
+.album-count {
+  font-size: 0.8rem;
+  color: #707070;
+}
+
+.expand-icon {
+  font-size: 1.5rem;
+  color: #707070;
+  font-weight: 300;
+}
+
+.album-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.photo-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.photo-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+
+.photo-info {
+  padding: 0.75rem;
+}
+
+.photo-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #e5e5e5;
+  margin-bottom: 0.25rem;
+}
+
+.photo-meta {
+  font-size: 0.75rem;
+  color: #606060;
+  margin-bottom: 0.5rem;
+}
+
+.photo-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.tag {
+  padding: 0.2rem 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: #a0a0a0;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.stat-card-wide {
+  grid-column: 1 / -1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.stat-icon {
+  font-size: 2rem;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #707070;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stat-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e5e5e5;
+  margin-bottom: 1rem;
+}
+
+/* Pages List */
+.pages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.page-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.page-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.page-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page-rank {
+  width: 1.5rem;
+  height: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #a0a0a0;
+}
+
+.page-url {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #a0a0a0;
+}
+
+.page-count {
+  font-size: 0.8rem;
+  color: #606060;
+}
+
+/* Visitor Table */
+.visitor-table-wrapper {
+  overflow-x: auto;
+}
+
+.visitor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.visitor-table th {
+  text-align: left;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #707070;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.visitor-table td {
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #a0a0a0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.visitor-table tr:hover td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.truncate {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Transitions */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.25s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
   }
 
-  /* ============================================
-   LAYOUT - DASHBOARD SHELL CONTAINER
-   ============================================ */
-
-  /* Main dashboard container - dark theme with animated background */
-  .dashboard-shell {
-    position: relative; /* Establishes stacking context for layers */
-    min-height: 100vh; /* Full viewport height minimum */
-    background: #000; /* Fallback solid black */
-    color: #f8fafc; /* Light text for dark background */
-    overflow: hidden; /* Contain animated layers */
+  .header-content {
+    padding: 1rem;
   }
 
-  /* ============================================
-   ANIMATED BACKGROUND LAYERS
-   ============================================ */
-
-  /* Primary background layer - deep ocean gradient with drift animation */
-  .bg-layer {
-    position: absolute; /* Positioned behind content */
-    inset: -10%; /* Overflow edges for smooth animation */
-    z-index: 0; /* Bottom layer */
-    /* Layered radial gradients creating deep ocean effect */
-    background: radial-gradient(
-        70% 55% at 50% 50%,
-        #2a5d77 0%,
-        #184058 18%,
-        #0f2a43 34%,
-        #0a1b30 50%,
-        #071226 66%,
-        #040d1c 80%,
-        #020814 92%,
-        #01040d 97%,
-        #000309 100%
-      ),
-      radial-gradient(160% 130% at 10% 10%, rgba(0, 0, 0, 0) 38%, #000309 76%, #000208 100%),
-      radial-gradient(160% 130% at 90% 90%, rgba(0, 0, 0, 0) 38%, #000309 76%, #000208 100%);
-    filter: saturate(1); /* Reduced saturation for clarity */
-    animation: drift 14s ease-in-out infinite alternate; /* Slow drift motion */
-    opacity: 0.85; /* Slightly lower opacity to deepen base contrast */
-  }
-
-  /* Secondary glow layer - animated light orbs for ambient motion */
-  .glow-layer {
-    position: absolute; /* Positioned above bg-layer */
-    inset: -15%; /* Extended overflow for orbit animation */
-    z-index: 0; /* Same layer as bg but renders after */
-    /* Multiple radial gradients creating soft glowing orbs */
-    background: radial-gradient(
-        28% 24% at 25% 35%,
-        rgba(111, 209, 255, 0.25),
-        rgba(111, 209, 255, 0)
-      ),
-      radial-gradient(30% 26% at 78% 60%, rgba(255, 182, 193, 0.22), rgba(255, 182, 193, 0)),
-      radial-gradient(22% 20% at 55% 20%, rgba(156, 233, 255, 0.18), rgba(156, 233, 255, 0));
-    mix-blend-mode: screen; /* Additive blending for luminous effect */
-    opacity: 0.45; /* Reduced glow for higher contrast */
-    filter: blur(8px) saturate(1); /* Softer, less saturated glow */
-    animation: orbit 26s ease-in-out infinite; /* Slow orbital motion */
-    pointer-events: none; /* Allow clicks to pass through */
-  }
-
-  /* ============================================
-   CONTENT LAYER
-   ============================================ */
-
-  /* Content wrapper - sits above animated backgrounds */
-  .content-shell {
-    position: relative; /* Stacking context above backgrounds */
-    z-index: 1; /* Above all background layers */
-    backdrop-filter: blur(2px); /* Subtle background blur for glass effect */
-  }
-
-  /* ============================================
-   HEADER BAR - TOP NAVIGATION
-   ============================================ */
-
-  /* Dashboard header with translucent background and blur effect */
-  .header-bar {
-    background: rgba(15, 23, 42, 0.92); /* Darker translucent navy for stronger separation */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.22); /* Stronger separator line */
-    padding: 1rem 1.5rem; /* Comfortable padding */
-    backdrop-filter: blur(6px); /* Strong glass blur effect */
-  }
-
-  /* ============================================
-   TAB NAVIGATION - UPLOAD / EXISTING TOGGLE
-   ============================================ */
-
-  /* Tab switch container - pill-shaped button group */
-  .tab-switch {
-    display: inline-flex; /* Inline flexbox for horizontal layout */
-    padding: 0.35rem; /* Inner padding around buttons */
-    background: rgba(255, 255, 255, 0.08); /* Stronger translucent background */
-    border: 1px solid rgba(255, 255, 255, 0.22); /* Stronger border */
-    border-radius: 0.6rem; /* Squared rounded corners */
-    gap: 0.35rem; /* Spacing between tab buttons */
-    box-shadow: 0 10px 32px -18px rgba(0, 0, 0, 0.95); /* Deeper shadow */
-  }
-
-  /* Individual tab button - inactive state */
-  .tab-btn {
-    padding: 0.65rem 1.1rem; /* Comfortable click target */
-    border-radius: 0.5rem; /* Squared corners matching parent */
-    border: 1px solid rgba(255, 255, 255, 0.18); /* Stronger border */
-    background: transparent; /* Clear background when inactive */
-    color: #f1f5f9; /* Lighter text for contrast */
-    font-weight: 600; /* Semi-bold for emphasis */
-    letter-spacing: 0.01em; /* Slight tracking */
-    transition: all 0.25s ease; /* Smooth state transitions */
-    box-shadow: 0 8px 24px -16px rgba(0, 0, 0, 0.9); /* Stronger shadow */
-  }
-
-  /* Tab button hover state - subtle highlight */
-  .tab-btn:hover {
-    background: rgba(255, 255, 255, 0.14); /* Clearer hover */
-    border-color: rgba(255, 255, 255, 0.28); /* Brighter border on hover */
-  }
-
-  /* Active tab button - selected state with gradient */
-  .tab-active {
-    background: linear-gradient(
-      120deg,
-      rgba(255, 255, 255, 0.28),
-      rgba(255, 255, 255, 0.16)
-    ); /* Slightly stronger gradient */
-    color: #0a0f1e; /* Dark text for contrast on light background */
-    border-color: rgba(255, 255, 255, 0.45); /* Strong border for definition */
-    box-shadow: 0 12px 36px -18px rgba(255, 255, 255, 0.7), 0 10px 26px -14px rgba(0, 0, 0, 0.8); /* Enhanced shadow depth */
-  }
-
-  /* ============================================
-   TRANSITIONS - TAB CONTENT ANIMATIONS
-   ============================================ */
-
-  /* Fade-slide transition for tab content switching */
-  .fade-slide-enter-active,
-  .fade-slide-leave-active {
-    transition: all 0.3s ease, opacity 0.3s ease; /* Smooth fade and slide */
-  }
-
-  /* Entering and leaving states - fade out with slight downward movement */
-  .fade-slide-enter-from,
-  .fade-slide-leave-to {
-    opacity: 0; /* Fully transparent */
-    transform: translateY(8px); /* Slide down slightly */
-  }
-
-  /* ============================================
-   CONTENT PANELS - FORM & GALLERY CONTAINERS
-   ============================================ */
-
-  /* Panel card - translucent container with glass morphism effect */
   .panel {
-    background: rgba(255, 255, 255, 0.12); /* Stronger surface for separation */
-    border: 1px solid rgba(255, 255, 255, 0.24); /* Stronger border definition */
-    border-radius: 0.75rem; /* Rounded corners */
-    padding: 1.5rem; /* Comfortable internal spacing */
-    margin-bottom: 2rem; /* Separation between panels */
-    box-shadow: 0 24px 60px -32px rgba(0, 0, 0, 0.9); /* Deeper shadow for elevation */
-    backdrop-filter: blur(6px); /* Glass blur effect */
+    padding: 1.25rem;
   }
 
-  /* ============================================
-   BUTTONS - ACTION ELEMENTS
-   ============================================ */
-
-  /* Shared button styles - squared with shadow */
-  .btn-solid,
-  .btn-danger {
-    border-radius: 0.5rem; /* Squared rounded corners */
-    box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.9); /* Subtle depth shadow */
+  .tab-switch {
+    gap: 0.25rem;
   }
 
-  /* Primary solid button - light background for primary actions */
-  .btn-solid {
-    background: #f8fafc; /* Near-white background */
-    color: #0b1020; /* Dark text for high contrast */
+  .tab-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
   }
 
-  /* Primary button hover state */
-  .btn-solid:hover {
-    background: #e2e8f0; /* Slightly darker on hover */
+  .photo-selector-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
 
-  /* Danger button - red for destructive actions */
-  .btn-danger {
-    background: #ef4444; /* Bright red for warning */
-  }
-
-  /* Danger button hover state */
-  .btn-danger:hover {
-    background: #dc2626; /* Darker red on hover */
-  }
-
-  /* ============================================
-   FORM INPUTS - TEXT FIELDS & TEXTAREAS
-   ============================================ */
-
-  /* Input field - translucent with focus states */
-  .input-field {
-    width: 100%; /* Full width of container */
-    padding: 0.75rem 1rem; /* Comfortable input padding */
-    background: rgba(255, 255, 255, 0.14); /* Stronger input background */
-    border: 1px solid rgba(255, 255, 255, 0.22); /* Stronger border */
-    border-radius: 0.6rem; /* Rounded input corners */
-    color: #f8fafc; /* Light text color */
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease; /* Smooth focus transitions */
-  }
-
-  /* Input focus state - enhanced visibility */
-  .input-field:focus {
-    outline: none; /* Remove default browser outline */
-    border-color: rgba(255, 255, 255, 0.5); /* Brighter border on focus */
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22); /* Stronger focus ring */
-    background: rgba(255, 255, 255, 0.18); /* Brighter background */
-  }
-
-  /* ============================================
-   ANIMATIONS - BACKGROUND MOTION EFFECTS
-   ============================================ */
-
-  /* Drift animation - slow organic movement for bg-layer */
-  @keyframes drift {
-    0% {
-      transform: translate3d(0px, 0px, 0) scale(1.05); /* Starting position with slight scale */
-      filter: blur(0px); /* Sharp at start */
-    }
-    50% {
-      transform: translate3d(-20px, 10px, 0) scale(1.08); /* Move left-down, scale up */
-      filter: blur(0.5px); /* Slight blur at midpoint */
-    }
-    100% {
-      transform: translate3d(15px, -15px, 0) scale(1.03); /* Move right-up, scale slightly */
-      filter: blur(1px); /* Soft blur at end */
-    }
-  }
-
-  /* Orbit animation - circular motion for glow-layer orbs */
-  @keyframes orbit {
-    0% {
-      transform: translate3d(0, 0, 0) scale(1); /* Starting position */
-      opacity: 0.65; /* Medium opacity */
-    }
-    35% {
-      transform: translate3d(12px, -16px, 0) scale(1.06) rotate(1deg); /* Move right-up with slight rotation */
-      opacity: 0.8; /* Brighten slightly */
-    }
-    65% {
-      transform: translate3d(-18px, 20px, 0) scale(1.04) rotate(-1deg); /* Move left-down with counter-rotation */
-      opacity: 0.72; /* Dim slightly */
-    }
-    100% {
-      transform: translate3d(0, 0, 0) scale(1.02); /* Return to center with slight scale */
-      opacity: 0.65; /* Return to base opacity */
-    }
-  }
-
-  /* ============================================
-   STATISTICS PANEL - ANALYTICS DISPLAY
-   ============================================ */
-
-  /* Stats grid layout - responsive card grid */
   .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: 1fr 1fr;
   }
 
-  /* Individual stat card */
-  .stat-card {
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-    transition: all 0.3s ease;
+  .album-photos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
-
-  .stat-card:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-2px);
-  }
-
-  /* Wide stat card for tables */
-  .stat-card-wide {
-    grid-column: 1 / -1;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-  }
-
-  /* Stat icon - emoji display */
-  .stat-icon {
-    font-size: 2.5rem;
-    line-height: 1;
-  }
-
-  .stat-icon-inline {
-    font-size: 1.5rem;
-    margin-right: 0.5rem;
-  }
-
-  /* Stat content wrapper */
-  .stat-content {
-    flex: 1;
-  }
-
-  /* Stat label - title */
-  .stat-label {
-    font-size: 0.9rem;
-    color: #cbd5e1; /* Lighter label for readability */
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  /* Stat value - large number */
-  .stat-value {
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: #f8fafc;
-    font-family: var(--font-heading);
-    line-height: 1;
-    margin-bottom: 0.25rem;
-  }
-
-  /* Stat meta - additional info */
-  .stat-meta {
-    font-size: 0.9rem;
-    color: #94a3b8;
-  }
-
-  /* Section title for tables */
-  .stat-section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: #f8fafc;
-    display: flex;
-    align-items: center;
-  }
-
-  /* Visitor table styling */
-  .visitor-table {
-    overflow-x: auto;
-  }
-
-  .visitor-table table {
-    border-collapse: collapse;
-  }
-
-  .visitor-table th {
-    padding: 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #cbd5e1;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.22);
-    white-space: nowrap;
-  }
-
-  .visitor-table td {
-    padding: 0.75rem;
-    font-size: 0.875rem;
-    color: #e2e8f0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  }
-
-  .visitor-table tr:hover td {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  /* Pages list styling */
-  .pages-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .page-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.875rem;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
-  }
-
-  .page-item:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .page-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex: 1;
-  }
-
-  .page-rank {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 0.375rem;
-    font-weight: 700;
-    font-size: 0.875rem;
-    color: #f8fafc;
-  }
-
-  .page-url {
-    color: #e2e8f0; /* Brighter URL text */
-    font-size: 0.95rem;
-    font-family: monospace;
-  }
-
-  .page-count {
-    color: #cbd5e1;
-    font-size: 0.875rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  /* ============================================
-   DASHBOARD-SPECIFIC OVERRIDES FOR UTILITY CLASSES
-   ============================================ */
-  /* Lift very dim gray utility to a more legible tone inside the dashboard */
-  :deep(.text-gray-400) {
-    color: #cbd5e1 !important;
-  }
-
-  /* Photo cards inside the "Existing Photos" grid: increase surface contrast */
-  .panel .grid .rounded-lg {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(255, 255, 255, 0.22) !important;
-  }
-
-  /* Responsive stats grid */
-  @media (max-width: 768px) {
-    .stats-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .visitor-table {
-      font-size: 0.75rem;
-    }
-
-    .visitor-table th,
-    .visitor-table td {
-      padding: 0.5rem;
-    }
-  }
+}
 </style>

@@ -6,17 +6,15 @@
     "noEmit": true,
     "moduleResolution": "bundler",
     "skipLibCheck": true,
+    "baseUrl": ".",
     "types": [
-      "node",
-      "@nuxt/test-utils"
+      "node"
     ],
     "typeRoots": [
       "./node_modules/@types"
     ],
     "paths": {
       "~/*": ["./*"],
-      "#app": [".nuxt"],
-      "#app/*": [".nuxt/*"],
       "~/server/*": ["./server/*"],
       "~/app/*": ["./app/*"],
       "~": ["."]

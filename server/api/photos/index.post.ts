@@ -1,5 +1,6 @@
 import { requireAuth } from '../../utils/auth'
 import { query } from '../../utils/db'
+import { defineEventHandler, readBody, createError } from 'h3'
 
 export default defineEventHandler(async (event) => {
   await requireAuth(event)

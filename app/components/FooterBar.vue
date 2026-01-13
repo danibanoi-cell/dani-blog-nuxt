@@ -4,7 +4,7 @@
     <div class="footer-left">
       <a
         class="ig-btn"
-        href="https://instagram.com"
+        href="https://instagram.com/danibanoi"
         target="_blank"
         rel="noreferrer"
         aria-label="Instagram"
@@ -28,17 +28,21 @@
     <div class="footer-right">
       <NuxtLink class="contact-link" to="/contact" aria-label="Contact"> Contact </NuxtLink>
       <div class="lang-switch" role="group" aria-label="Language">
-        <NuxtLink
-          :to="switchLocalePath('it')"
+        <button
           class="lang-link"
           :class="{ active: currentLocale === 'it' }"
-          >IT</NuxtLink
+          @click="switchLanguage('it')"
+          type="button"
+          aria-label="Switch to Italian"
+          >IT</button
         >
-        <NuxtLink
-          :to="switchLocalePath('en')"
+        <button
           class="lang-link"
           :class="{ active: currentLocale === 'en' }"
-          >EN</NuxtLink
+          @click="switchLanguage('en')"
+          type="button"
+          aria-label="Switch to English"
+          >EN</button
         >
       </div>
       <div class="theme-switch" role="group" aria-label="Theme">
@@ -66,11 +70,21 @@
 </template>
 
 <script setup lang="ts">
-  const currentYear = new Date().getFullYear();
-  const { locale } = useI18n();
-  const switchLocalePath = useSwitchLocalePath();
-  const currentLocale = computed(() => locale.value);
-  const { toggleTheme, isDark, setTheme } = useTheme();
+  import { computed } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { useI18n } from 'vue-i18n'
+  import { useTheme } from '../composables/useTheme'
+
+  const currentYear = new Date().getFullYear()
+  const { locale } = useI18n()
+  const router = useRouter()
+  const currentLocale = computed(() => locale.value)
+  const { isDark, setTheme } = useTheme()
+
+  const switchLanguage = (lang: 'it' | 'en') => {
+    const newPath = lang === 'it' ? '/' : `/en${router.currentRoute.value.path.replace(/^\/en/, '')}`
+    router.push(newPath)
+  }
 </script>
 
 <style scoped>
